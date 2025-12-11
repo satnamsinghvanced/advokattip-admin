@@ -229,10 +229,10 @@ const saveFaq = () => {
 
   const saveSEOSetitngs = () => dispatch(updateHomepageSection("seo", {seoSection: form}));
  const savePros = () => {
-  if (!validateFields({ pros })) {
-    toast.error("Please fill all Pros section fields");
-    return;
-  }
+  // if (!validateFields({ pros })) {
+  //   toast.error("Please fill all Pros section fields");
+  //   return;
+  // }
   dispatch(updateHomepageSection("pros", { prosSection: pros }));
 };
 
