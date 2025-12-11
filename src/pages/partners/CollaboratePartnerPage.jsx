@@ -263,8 +263,12 @@ export const CollaboratePartnerPage = () => {
                       <td className="px-6 py-4">
                         {Array.isArray(p.postalCodes)
                           ? p.postalCodes.join(", ")
-                          : p.postalCodes?.exact
+                          : p.postalCodes?.exact?.length > 0
                           ? p.postalCodes.exact.map((c) => c.code).join(", ")
+                          : p.postalCodes?.ranges?.length > 0
+                          ? p.postalCodes.ranges
+                              .map((r) => `${r.from}-${r.to}`)
+                              .join(", ")
                           : ""}
                       </td>
                       <td className="px-6 py-4 font-semibold text-slate-900">
