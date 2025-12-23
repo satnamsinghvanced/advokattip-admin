@@ -90,12 +90,20 @@ const ArticleDetailPage = () => {
                 {selectedArticle.categoryId?.title || "N/A"}
               </p>
             </div>
-            <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-4">
+            {/* <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-4">
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                 Author
               </p>
               <p className="mt-1 text-base font-semibold text-slate-900">
                 {selectedArticle.createdBy?.username || "N/A"}
+              </p>
+            </div> */}
+             <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Article Position
+              </p>
+              <p className="mt-1 text-base font-semibold text-slate-900">
+                {selectedArticle.articlePosition || 0 }
               </p>
             </div>
             <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-4">
@@ -110,11 +118,23 @@ const ArticleDetailPage = () => {
             </div>
             <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-4">
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Language
+                Article Tags
               </p>
-              <p className="mt-1 text-base font-semibold text-slate-900">
-                {selectedArticle.language || "N/A"}
-              </p>
+              <div className="flex flex-wrap gap-2 mt-1">
+                {Array.isArray(selectedArticle.articleTags) &&
+                selectedArticle.articleTags.length > 0 ? (
+                  selectedArticle.articleTags.map((tag, index) => (
+                    <span
+                      key={index}
+                      className="px-3 py-1 text-xs bg-slate-200 rounded-full text-slate-700"
+                    >
+                      {tag}
+                    </span>
+                  ))
+                ) : (
+                  <p className="text-base font-semibold text-slate-900">N/A</p>
+                )}
+              </div>
             </div>
           </div>
 
@@ -137,9 +157,109 @@ const ArticleDetailPage = () => {
               className="prose mt-3 max-w-none text-slate-700"
               dangerouslySetInnerHTML={{
                 __html:
-                  selectedArticle.description || "<p>No description provided.</p>",
+                  selectedArticle.description ||
+                  "<p>No description provided.</p>",
               }}
             />
+          </div>
+             <div className="rounded-xl mt-6 p-5 border border-slate-200 ">
+            <p className="text-xs font-semibold uppercase text-slate-600 mb-4">
+              SEO Information
+            </p>
+            <div className="grid gap-4 md:grid-cols-3">
+              {[
+                { label: "Meta Title", value: selectedArticle.metaTitle },
+                {
+                  label: "Meta Description",
+                  value: selectedArticle.metaDescription,
+                },
+                { label: "Meta Keywords", value: selectedArticle.metaKeywords },
+                { label: "Canonical URL", value: selectedArticle.canonicalUrl },
+              ].map((item, i) => (
+                <div
+                  key={i}
+                  className="rounded-xl bg-slate-50 p-4 border border-slate-100"
+                >
+                  <p className="text-xs font-semibold text-slate-500 uppercase">
+                    {item.label}
+                  </p>
+                  <p className="mt-1 text-sm text-slate-900 font-medium">
+                    {item.value || "N/A"}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            {/* Open Graph */}
+            <div className="grid gap-4 md:grid-cols-3">
+              {[
+                { label: "OG Title", value: selectedArticle.ogTitle },
+                {
+                  label: "OG Description",
+                  value: selectedArticle.ogDescription,
+                },
+                { label: "OG Type", value: selectedArticle.ogType },
+              ].map((item, i) => (
+                <div
+                  key={i}
+                  className="rounded-xl bg-slate-50 p-4 border border-slate-100"
+                >
+                  <p className="text-xs font-semibold text-slate-500 uppercase">
+                    {item.label}
+                  </p>
+                  <p className="mt-1 text-sm text-slate-900 font-medium">
+                    {item.value || "N/A"}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            {/* JSON LD */}
+            <div className="rounded-xl p-5 border border-slate-100 bg-white shadow-inner">
+              <p className="text-xs font-semibold uppercase text-slate-500">
+                JSON-LD
+              </p>
+              <pre className="mt-3 text-sm bg-slate-400 text-white p-3 rounded-md overflow-auto">
+                {selectedArticle.jsonLd || "No JSON-LD provided"}
+              </pre>
+            </div>
+
+            {/* Dates */}
+            {/* <div className="grid gap-4 md:grid-cols-3">
+          {[
+            { label: "Published Date", value: selectedArticle.publishedDate },
+            { label: "Last Updated Date", value: selectedArticle.lastUpdatedDate },
+            { label: "Show Published Date", value: selectedArticle.showPublishedDate ? "Yes" : "No" },
+            { label: "Show Updated Date", value: selectedArticle.showLastUpdatedDate ? "Yes" : "No" },
+          ].map((item, i) => (
+            <div key={i} className="rounded-xl bg-slate-50 p-4 border border-slate-100">
+              <p className="text-xs font-semibold text-slate-500 uppercase">{item.label}</p>
+              <p className="mt-1 text-sm text-slate-900 font-medium">{item.value || "N/A"}</p>
+            </div>
+          ))}
+        </div> */}
+
+            {/* Robots */}
+            <div className="rounded-xl bg-slate-50 p-4 border border-slate-100">
+              <p className="text-xs font-semibold text-slate-500 uppercase">
+                Robots
+              </p>
+              <div className="grid md:grid-cols-3 gap-2 mt-3 text-sm">
+                {Object.entries(selectedArticle.robots || {}).map(
+                  ([key, value], i) => (
+                    <div
+                      key={i}
+                      className="flex justify-between bg-white p-2 rounded border border-slate-200"
+                    >
+                      <span className="capitalize">{key}</span>
+                      <span className="font-medium">
+                        {value ? "Enabled" : "Disabled"}
+                      </span>
+                    </div>
+                  )
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -148,4 +268,3 @@ const ArticleDetailPage = () => {
 };
 
 export default ArticleDetailPage;
-

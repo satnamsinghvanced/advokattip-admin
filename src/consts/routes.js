@@ -1,5 +1,5 @@
 export const ROUTES = {
-  HOME: "/",
+  HOME: "/dashboard",
   ME: "/me",
   LOGIN: "/login",
   LOGIN_PAGE: "/",
@@ -7,7 +7,9 @@ export const ROUTES = {
   SETTINGS: "/settings",
   HELP_CENTER: "/helpcenter",
   FORMS: "/forms",
-  FAQ: "/faq",
+  FAQ: "/faqs",
+  ARTICLEPAGE:"/article-page",
+  FORMPAGE:"/form-page",
   ABOUT: "/about",
   ARTICLE: "/articles",
   ARTICLE_CREATE: "/articles/create",
@@ -21,11 +23,13 @@ export const ROUTES = {
   PARTNER: "/partner",
   TERM_OF_SERVICE: "/term-of-service",
   PRIVACY_POLICY: "/privacy-policy",
-  EMAIL: "email-templates",
+  EMAIL_TEMPLATES: "/email-templates",
   COUNTY: "/counties",
-  COUNTY_CREATE: "/counties/create",
+  COUNTY_CREATE: "/county/create",
   COUNTY_VIEW: "/county/:countyId",
   COUNTY_EDIT: "/county/:countyId/Edit",
+
+
   CITIES: "/counties",
   PLACES: "/places",
   PLACES_CREATE: "/places/create",
@@ -40,6 +44,10 @@ export const ROUTES = {
   FOOTER_CREATE: "footer/create/:tab",
   FOOTER_VIEW: "footer/create/articles/select",
   FOOTER_EDIT: "footer/edit/:tab/:index",
+  FOOTER_EDIT_FOR_HEADER_AND_ADDRESS: "footer/edit/:tab/",
+  
+
+  FAQPAGE :"/faq-page",
 
 
   COUNTIES: "/counties",
@@ -58,4 +66,6 @@ export const ROUTES = {
   PARTNER_CREATE: "/partners/create",
   PARTNERS_ID: "/partners/:id",
   PARTNERS_EDIT_ID: "/partners/:id/edit",
+
+  LEAD_LOGS :"/lead-logs"
 };

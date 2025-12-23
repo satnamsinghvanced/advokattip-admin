@@ -9,13 +9,19 @@ import { AiTwotoneEdit } from "react-icons/ai";
 import { RiDeleteBin5Line } from "react-icons/ri";
 import ImageUploader from "../../UI/ImageUpload";
 import ConfirmModal from "../../UI/ConfirmDeleteModal";
+import { toast } from "react-toastify";
 
 const HomePageEditor = () => {
   const dispatch = useDispatch();
   const { sections, is_loading, errors } = useSelector(
     (state) => state.homepage
   );
-
+  const [allLocations, setAllLocations] = useState([]);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const filteredLocations = allLocations.filter((item) =>
+    item.name.toLowerCase().includes(search.toLowerCase())
+  );
   const [hero, setHero] = useState({
     title: "",
     subtitle: "",
@@ -30,13 +36,24 @@ const HomePageEditor = () => {
   });
 
   const [category, setCategory] = useState({ heading: "" });
-  const [articles, setArticles] = useState({ heading: "" });
+  const [faq, setFaq] = useState({ title: "" });
+  const [articles, setArticles] = useState({
+    heading: "",
+    ctaLink: "",
+    buttonText: "",
+  });
   const [whyChoose, setWhyChoose] = useState({
     heading: "",
     cards: [{ title: "", icon: "", description: "" }],
   });
 
-  const [city, setCity] = useState({ title: "", description: "" });
+  const [city, setCity] = useState({
+    title: "",
+    description: "",
+    ctaLink: "",
+    buttonText: "",
+    locations: [],
+  });
   const [pros, setPros] = useState([
     {
       title: "",
@@ -47,7 +64,31 @@ const HomePageEditor = () => {
       buttonText: "",
     },
   ]);
-
+  const [form, setForm] = useState({
+    metaTitle: "",
+    metaDescription: "",
+    metaKeywords: "",
+    metaImage: "",
+    ogTitle: "",
+    ogDescription: "",
+    ogImage: "",
+    ogType: "",
+    canonicalUrl: "",
+    jsonLd: "",
+    customHead: "",
+    robots: {
+      index: true,
+      follow: true,
+      noindex: false,
+      nofollow: false,
+    },
+  });
+  useEffect(() => {
+    fetch(`${import.meta.env.VITE_API_URL}/homepage/locations`)
+      .then((res) => res.json())
+      .then((res) => setAllLocations(res.data || []))
+      .catch(() => toast.error("Failed to load locations"));
+  }, []);
   useEffect(() => {
     dispatch(fetchAllHomepageSections());
     return () => dispatch(clearMessages());
@@ -63,7 +104,11 @@ const HomePageEditor = () => {
         ],
       });
     if (sections["articles-heading"])
-      setArticles({ heading: sections["articles-heading"].heading || "" });
+      setArticles({
+        heading: sections["articles-heading"].heading || "",
+        buttonText: sections["articles-heading"].buttonText || "",
+        ctaLink: sections["articles-heading"].ctaLink || "",
+      });
     if (sections["category-heading"])
       setCategory({ heading: sections["category-heading"].heading || "" });
     if (sections["why-choose"])
@@ -73,10 +118,17 @@ const HomePageEditor = () => {
           { title: "", icon: "", description: "" },
         ],
       });
+    if (sections.faq)
+      setFaq({
+        title: sections.faq.title || "",
+      });
     if (sections.city)
       setCity({
         title: sections.city.title || "",
         description: sections.city.description || "",
+        buttonText: sections.city.buttonText || "",
+        ctaLink: sections.city.ctaLink || "",
+        locations: sections.city.locations || [],
       });
     if (sections.pros)
       setPros(
@@ -93,25 +145,145 @@ const HomePageEditor = () => {
               },
             ]
       );
+    if (sections.seo) {
+      setForm({
+        metaTitle: sections.seo.metaTitle || "",
+        metaDescription: sections.seo.metaDescription || "",
+        metaKeywords: sections.seo.metaKeywords || "",
+        metaImage: sections.seo.metaImage || "",
+        ogTitle: sections.seo.ogTitle || "",
+        ogDescription: sections.seo.ogDescription || "",
+        ogImage: sections.seo.ogImage || "",
+        ogType: sections.seo.ogType || "",
+        canonicalUrl: sections.seo.canonicalUrl || "",
+        jsonLd: sections.seo.jsonLd || "",
+        customHead: sections.seo.customHead || "",
+        robots: sections.seo.robots || {
+          index: true,
+          follow: true,
+          noindex: false,
+          nofollow: false,
+        },
+      });
+    }
   }, [sections]);
 
-  const saveHero = () => dispatch(updateHomepageSection("hero", hero));
+  const validateFields = (obj) => {
+    for (const key in obj) {
+      if (typeof obj[key] === "string" && obj[key].trim() === "") return false;
+
+      if (Array.isArray(obj[key])) {
+        if (obj[key].length === 0) return false;
+        for (const item of obj[key]) {
+          if (typeof item === "string" && item.trim() === "") return false;
+          if (typeof item === "object" && !validateFields(item)) return false;
+        }
+      }
+
+      if (typeof obj[key] === "object" && !Array.isArray(obj[key]))
+        if (!validateFields(obj[key])) return false;
+    }
+    return true;
+  };
+
+  const saveHero = () => {
+    if (!validateFields(hero)) {
+      toast.error("Please fill all fields in Hero section");
+      return;
+    }
+    dispatch(updateHomepageSection("hero", hero));
+  };
+
   const saveHowItWorks = () => {
+    if (!validateFields(howItWorks)) {
+      toast.error("Please fill all fields in How It Works");
+      return;
+    }
     dispatch(updateHomepageSection("how-it-works", howItWorks));
   };
 
-  const saveArticles = () =>
+  const saveArticles = () => {
+    if (!validateFields(category)) {
+      toast.error("Category Heading is required");
+      return;
+    }
     dispatch(updateHomepageSection("category-heading", category));
-  const saveArticlesHeading = () =>
+  };
+
+  const saveArticlesHeading = () => {
+    if (!validateFields(articles)) {
+      toast.error("Please fill all Article Heading fields");
+      return;
+    }
     dispatch(updateHomepageSection("articles-heading", articles));
+  };
 
   const saveWhyChoose = () => {
+    if (!validateFields(whyChoose)) {
+      toast.error("Please fill all fields in Why Choose section");
+      return;
+    }
     dispatch(updateHomepageSection("why-choose", whyChoose));
   };
-  const saveCity = () => dispatch(updateHomepageSection("city", city));
-  const savePros = () =>
-    dispatch(updateHomepageSection("pros", { prosSection: pros }));
+  const saveCity = () => {
+    if (!validateFields(city)) {
+      toast.error("Please fill all City fields");
+      return;
+    }
+    dispatch(updateHomepageSection("city", city));
+  };
+  const saveFaq = () => {
+    if (!validateFields(faq)) {
+      toast.error("FAQ Title is required");
+      return;
+    }
+    dispatch(updateHomepageSection("faq", faq));
+  };
 
+  const saveSEOSetitngs = () =>
+    dispatch(updateHomepageSection("seo", { seoSection: form }));
+  const savePros = () => {
+    // if (!validateFields({ pros })) {
+    //   toast.error("Please fill all Pros section fields");
+    //   return;
+    // }
+    dispatch(updateHomepageSection("pros", { prosSection: pros }));
+  };
+  const addLocation = (item) => {
+    if (city.locations.length >= 8) {
+      toast.error("You can select maximum 8 locations");
+      return;
+    }
+
+    if (
+      city.locations.some(
+        (l) => l.locationId === item.id && l.locationType === item.locationType
+      )
+    ) {
+      toast.info("Location already selected");
+      return;
+    }
+
+    setCity((prev) => ({
+      ...prev,
+      locations: [
+        ...prev.locations,
+        {
+          locationId: item.id,
+          locationType: item.locationType,
+          order: prev.locations.length + 1,
+        },
+      ],
+    }));
+  };
+
+  const removeLocation = (index) => {
+    const updated = city.locations.filter((_, i) => i !== index);
+    setCity({
+      ...city,
+      locations: updated.map((l, i) => ({ ...l, order: i + 1 })),
+    });
+  };
   return (
     <div className=" min-h-screen space-y-10">
       <h1 className="text-2xl font-bold text-gray-800 mb-4 6">Homepage</h1>
@@ -254,12 +426,147 @@ const HomePageEditor = () => {
                 setCity({ ...city, description: e.target.value })
               }
             />
+            <Input
+              label="Button Text"
+              value={city.buttonText}
+              onChange={(e) => setCity({ ...city, buttonText: e.target.value })}
+            />
+            <Input
+              label="CTA Link"
+              value={city.ctaLink}
+              onChange={(e) => setCity({ ...city, ctaLink: e.target.value })}
+            />
+
+            {/* SELECT LOCATIONS */}
+            <h5 className="font-semibold mt-4">
+              Select Counties / Places (Max 8)
+            </h5>
+
+            <div className="relative">
+              {/* Dropdown trigger */}
+              <button
+                type="button"
+                onClick={() => setIsDropdownOpen((prev) => !prev)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-left bg-white"
+              >
+                {city.locations.length
+                  ? `${city.locations.length} selected`
+                  : "Select locations"}
+              </button>
+
+              {/* Dropdown */}
+              {isDropdownOpen && (
+                <div className="absolute z-20 w-full bg-white border border-gray-300 rounded-lg mt-1 shadow-lg">
+                  {/* Search */}
+                  <input
+                    type="text"
+                    placeholder="Search county or place..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="w-full px-3 py-2 border-b outline-none"
+                  />
+
+                  {/* List */}
+                  <div className="max-h-60 overflow-y-auto">
+                    {filteredLocations.length === 0 && (
+                      <p className="p-3 text-sm text-gray-500">
+                        No results found
+                      </p>
+                    )}
+
+                    {filteredLocations.map((item) => {
+                      const isSelected = city.locations.some(
+                        (l) =>
+                          l.locationId === item.id &&
+                          l.locationType === item.locationType
+                      );
+
+                      return (
+                        <button
+                          key={item.id}
+                          type="button"
+                          disabled={isSelected}
+                          onClick={() => {
+                            addLocation(item);
+                            setSearch("");
+                            setIsDropdownOpen(false);
+                          }}
+                          className={`w-full text-left px-3 py-2 hover:bg-gray-100 flex justify-between ${
+                            isSelected ? "opacity-50 cursor-not-allowed" : ""
+                          }`}
+                        >
+                          <span>{item.name}</span>
+                          <span className="text-xs text-gray-500">
+                            {item.locationType}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+            {/* SELECTED */}
+            <h5 className="font-semibold mt-4">Selected Locations</h5>
+
+            <div className="flex flex-wrap gap-2 mt-3">
+              {city.locations.map((loc, i) => {
+                const full = allLocations.find(
+                  (a) =>
+                    a.id === loc.locationId &&
+                    a.locationType === loc.locationType
+                );
+
+                return (
+                  <div
+                    key={i}
+                    className="flex items-center gap-2 bg-gray-200 px-3 py-1 rounded-full"
+                  >
+                    <span className="text-sm">
+                      {full?.name} ({loc.locationType})
+                    </span>
+                    <button
+                      onClick={() => removeLocation(i)}
+                      className="text-red-600 text-sm"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
           </Section>
+
           <Section title="Articles Heading" onSave={saveArticlesHeading}>
             <Input
               label="Heading"
               value={articles.heading}
-              onChange={(e) => setArticles({ heading: e.target.value })}
+              onChange={(e) =>
+                setArticles((prev) => ({ ...prev, heading: e.target.value }))
+              }
+            />
+
+            <Input
+              label="Button Text"
+              value={articles.buttonText}
+              onChange={(e) =>
+                setArticles((prev) => ({ ...prev, buttonText: e.target.value }))
+              }
+            />
+
+            <Input
+              label="CTA Link"
+              value={articles.ctaLink}
+              onChange={(e) =>
+                setArticles((prev) => ({ ...prev, ctaLink: e.target.value }))
+              }
+            />
+          </Section>
+          <Section title="FAQ Section" onSave={saveFaq}>
+            <Input
+              label="Title"
+              value={faq.title}
+              onChange={(e) => setFaq(() => ({ title: e.target.value }))}
             />
           </Section>
           <Section title="Pros Section" onSave={savePros}>
@@ -410,6 +717,124 @@ const HomePageEditor = () => {
               }
             />
           </Section>
+          {/* SEO SECTION */}
+          <Section title="SEO Section" onSave={saveSEOSetitngs}>
+            <div className="border-t pt-6">
+              <h2 className="text-xl font-bold mb-4">SEO Settings</h2>
+
+              <Input
+                label="Meta Title"
+                value={form.metaTitle}
+                onChange={(e) =>
+                  setForm({ ...form, metaTitle: e.target.value })
+                }
+              />
+
+              <Input
+                label="Meta Description"
+                textarea
+                value={form.metaDescription}
+                onChange={(e) =>
+                  setForm({ ...form, metaDescription: e.target.value })
+                }
+              />
+
+              <Input
+                label="Meta Keywords (comma separated)"
+                value={form.metaKeywords}
+                onChange={(e) =>
+                  setForm({ ...form, metaKeywords: e.target.value })
+                }
+              />
+
+              <ImageUploader
+                label="Meta Image"
+                value={form.metaImage}
+                onChange={(img) => setForm({ ...form, metaImage: img })}
+              />
+            </div>
+
+            {/* OG TAGS */}
+            <div className="border-t pt-6">
+              <h2 className="text-xl font-bold mb-4">Open Graph (OG) Tags</h2>
+
+              <Input
+                label="OG Title"
+                value={form.ogTitle}
+                onChange={(e) => setForm({ ...form, ogTitle: e.target.value })}
+              />
+              <Input
+                label="OG Description"
+                textarea
+                value={form.ogDescription}
+                onChange={(e) =>
+                  setForm({ ...form, ogDescription: e.target.value })
+                }
+              />
+
+              <ImageUploader
+                label="OG Image"
+                value={form.ogImage}
+                onChange={(img) => setForm({ ...form, ogImage: img })}
+              />
+
+              <Input
+                label="OG Type"
+                value={form.ogType}
+                onChange={(e) => setForm({ ...form, ogType: e.target.value })}
+              />
+            </div>
+
+            {/* ADVANCED SEO */}
+            <div className="border-t pt-6">
+              <h2 className="text-xl font-bold mb-4">Advanced SEO</h2>
+
+              <Input
+                label="Canonical URL"
+                value={form.canonicalUrl}
+                onChange={(e) =>
+                  setForm({ ...form, canonicalUrl: e.target.value })
+                }
+              />
+
+              <Textarea
+                label="JSON-LD Schema"
+                value={form.jsonLd}
+                onChange={(e) => setForm({ ...form, jsonLd: e.target.value })}
+              />
+
+              <Textarea
+                label="Custom Head Tags"
+                // textarea
+                value={form.customHead}
+                onChange={(e) =>
+                  setForm({ ...form, customHead: e.target.value })
+                }
+              />
+            </div>
+
+            {/* ROBOTS */}
+            <div className="border-t pt-6">
+              <h2 className="text-xl font-bold mb-4">Robots Settings</h2>
+
+              {Object.keys(form.robots).map((key) => (
+                <label key={key} className="flex items-center gap-2">
+                  <input
+                    className="!relative"
+                    type="checkbox"
+                    checked={form.robots[key]}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        robots: { ...form.robots, [key]: e.target.checked },
+                      })
+                    }
+                  />
+                  {key}
+                </label>
+              ))}
+            </div>
+          </Section>
         </>
       )}
     </div>
@@ -449,13 +874,13 @@ const Section = ({ title, children, onSave }) => (
   </div>
 );
 
-const Input = ({ label, value, onChange, disabled }) => (
+const Input = ({ label, type, value, onChange, disabled }) => (
   <div>
     <label className="block text-sm font-medium text-gray-600 mb-1">
       {label}
     </label>
     <input
-      type="text"
+      type={type}
       value={value}
       onChange={onChange}
       disabled={disabled}

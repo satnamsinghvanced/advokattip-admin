@@ -12,7 +12,9 @@ import {
   clearSelectedAgent,
 } from "../../store/slices/realEstateAgents";
 import { toast } from "react-toastify";
+import ImageUploader from "../../UI/ImageUpload";
 
+/* ------------------ QUILL CONFIG ------------------ */
 const quillModules = {
   toolbar: [
     [{ header: [1, 2, 3, false] }],
@@ -39,77 +41,108 @@ const quillFormats = [
 
 const requiredFields = ["title", "description", "descriptionBottom"];
 
+/* ------------------ EMPTY FORM ------------------ */
+const EMPTY_FORM = {
+  title: "",
+  description: "",
+  descriptionBottom: "",
+
+  metaTitle: "",
+  metaDescription: "",
+  metaKeywords: "",
+  metaImage: "",
+
+  canonicalUrl: "",
+  jsonLd: "",
+
+  ogTitle: "",
+  ogDescription: "",
+  ogImage: "",
+  ogType: "website",
+
+  publishedDate: "",
+  lastUpdatedDate: "",
+  showPublishedDate: false,
+  showLastUpdatedDate: false,
+
+  robots: {
+    noindex: false,
+    nofollow: false,
+    noarchive: false,
+    nosnippet: false,
+    noimageindex: false,
+    notranslate: false,
+  },
+
+  customHead: "",
+  slug: "",
+
+  redirect: {
+    enabled: false,
+    from: "",
+    to: "",
+    type: 301,
+  },
+
+  breadcrumbs: [],
+  includeInSitemap: true,
+  priority: 0.7,
+  changefreq: "weekly",
+
+  isScheduled: false,
+  scheduledPublishDate: "",
+
+  isDeleted: false,
+  isHidden: false,
+};
+
 const RealEstateAgentsFormPage = () => {
   const { id } = useParams();
-  const isEditMode = Boolean(id);
-
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { selectedAgent } = useSelector((state) => state.agents);
 
-  const [form, setForm] = useState({
-    title: "",
-    description: "",
-    descriptionBottom: "",
-  });
+  const { selectedAgent, loading } = useSelector((state) => state.agents);
 
+  const [form, setForm] = useState(EMPTY_FORM);
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
 
+  /* ------------------ FETCH DATA ------------------ */
   useEffect(() => {
-    if (isEditMode) dispatch(getAgentById(id));
+    if (id) dispatch(getAgentById(id));
     return () => dispatch(clearSelectedAgent());
-  }, [dispatch, id, isEditMode]);
+  }, [dispatch, id]);
 
+  /* ------------------ POPULATE OR KEEP BLANK ------------------ */
   useEffect(() => {
-    if (!selectedAgent) return;
-
-    setForm({
-      title: selectedAgent.title || "",
-      description: selectedAgent.description || "",
-      descriptionBottom: selectedAgent.descriptionBottom || "",
-    });
+    if (selectedAgent) {
+      setForm({
+        ...EMPTY_FORM,
+        ...selectedAgent,
+        robots: {
+          ...EMPTY_FORM.robots,
+          ...selectedAgent.robots,
+        },
+      });
+    } else {
+      // 🔥 KEY FIX: no data → blank form
+      setForm(EMPTY_FORM);
+    }
   }, [selectedAgent]);
 
-  const validateField = (name, value) => {
-    let msg = "";
-    if (requiredFields.includes(name) && !value.trim()) {
-      msg = `${name} is required`;
-    }
-    setErrors((prev) => ({ ...prev, [name]: msg }));
-    return msg === "";
-  };
-
+  /* ------------------ VALIDATION ------------------ */
   const validateAll = () => {
     const newErrors = {};
     requiredFields.forEach((f) => {
-      if (!form[f].trim()) newErrors[f] = `${f} is required`;
+      if (!form[f]?.trim()) newErrors[f] = `${f} is required`;
     });
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
-    validateField(name, value);
-  };
-
+  /* ------------------ SUBMIT ------------------ */
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!selectedAgent) {
-      return (
-        <div className="space-y-6">
-          <PageHeader
-            title="Real Estate Agents Page"
-            buttonsList={headerButtons}
-          />
-          <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-6 text-center text-sm text-slate-500 h-100vh">
-            No Real Estate Agents Page Found.
-          </div>
-        </div>
-      );
-    }
 
     if (!validateAll()) {
       toast.error("Please fix errors before saving");
@@ -117,15 +150,16 @@ const RealEstateAgentsFormPage = () => {
     }
 
     setSubmitting(true);
-    const payload = { ...form };
 
     try {
-      if (isEditMode) {
-        await dispatch(updateAgent({ id, agentData: payload })).unwrap();
-        // toast.success("Agent updated");
+      if (selectedAgent?._id) {
+        // ✅ UPDATE
+        await dispatch(
+          updateAgent({ id: selectedAgent._id, agentData: form })
+        ).unwrap();
       } else {
-        await dispatch(createAgent(payload)).unwrap();
-        // toast.success("Agent created");
+        // ✅ CREATE (even if URL had ID)
+        await dispatch(createAgent(form)).unwrap();
       }
 
       navigate("/real-estate-agents");
@@ -136,20 +170,15 @@ const RealEstateAgentsFormPage = () => {
     }
   };
 
-  const hasErrors = Object.values(errors).some(Boolean);
-  const isDisabled = hasErrors || submitting;
+  const isDisabled =
+    submitting || Object.values(errors).some((val) => val);
 
+  /* ------------------ UI (UNCHANGED) ------------------ */
   return (
     <div className="space-y-6">
       <PageHeader
-        title={
-          isEditMode ? "Edit Real Estate Agent Page" : "Add Real Estate Agent"
-        }
-        description={
-          isEditMode
-            ? "Update content for this Agent."
-            : "Create a new Real Estate Agent entry."
-        }
+        title="Edit Real Estate Agent Page"
+        description="Manage real estate agent content."
         buttonsList={useMemo(
           () => [
             {
@@ -168,93 +197,68 @@ const RealEstateAgentsFormPage = () => {
         onSubmit={handleSubmit}
         className="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]"
       >
-        {/* LEFT CARD */}
+        {/* LEFT */}
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="grid gap-4 md:grid-cols-2">
-            <div>
-              <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Title <span className="text-red-500">*</span>
-              </label>
-              <input
-                name="title"
-                value={form.title}
-                onChange={handleChange}
-                className={`mt-1 w-full rounded-xl border px-3 py-2 text-sm ${
-                  errors.title
-                    ? "border-red-400 focus:border-red-500"
-                    : "border-slate-200 focus:border-primary"
-                }`}
-              />
-              {errors.title && (
-                <p className="mt-1 text-xs text-red-600">{errors.title}</p>
-              )}
-            </div>
-          </div>
+          <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Title *
+          </label>
+          <input
+            value={form.title}
+            onChange={(e) =>
+              setForm({ ...form, title: e.target.value })
+            }
+            className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
+          />
 
-          {/* DESCRIPTION */}
           <div className="mt-4">
             <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-              Description <span className="text-red-500">*</span>
+              Description *
             </label>
-            <div className="mt-2 rounded-2xl border border-slate-200 p-1">
-              <ReactQuill
-                value={form.description}
-                onChange={(value) =>
-                  setForm((prev) => ({ ...prev, description: value }))
-                }
-                modules={quillModules}
-                formats={quillFormats}
-              />
-            </div>
-            {errors.description && (
-              <p className="mt-1 text-xs text-red-600">{errors.description}</p>
-            )}
+            <ReactQuill
+              value={form.description}
+              onChange={(v) =>
+                setForm({ ...form, description: v })
+              }
+              modules={quillModules}
+              formats={quillFormats}
+            />
+          </div>
+
+          <div className="mt-4">
+            <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Description Bottom *
+            </label>
+            <ReactQuill
+              value={form.descriptionBottom}
+              onChange={(v) =>
+                setForm({ ...form, descriptionBottom: v })
+              }
+              modules={quillModules}
+              formats={quillFormats}
+            />
           </div>
         </div>
 
-        {/* RIGHT SIDE CARD */}
+        {/* RIGHT */}
         <div className="space-y-6">
-          {/* DESCRIPTION BOTTOM */}
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-              Description Bottom <span className="text-red-500">*</span>
-            </label>
-            <div className="mt-2 rounded-2xl border border-slate-200 p-1">
-              <ReactQuill
-                value={form.descriptionBottom}
-                onChange={(value) =>
-                  setForm((prev) => ({ ...prev, descriptionBottom: value }))
-                }
-                modules={quillModules}
-                formats={quillFormats}
-              />
-            </div>
-            {errors.descriptionBottom && (
-              <p className="mt-1 text-xs text-red-600">
-                {errors.descriptionBottom}
-              </p>
-            )}
+            <ImageUploader
+              label="Meta Image"
+              value={form.metaImage}
+              onChange={(img) =>
+                setForm({ ...form, metaImage: img })
+              }
+            />
           </div>
 
-          {/* SUBMIT BUTTON CARD */}
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <button
               type="submit"
               disabled={isDisabled}
-              className="w-full rounded-full bg-primary px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-70"
+              className="w-full rounded-full bg-primary px-6 py-3 text-sm font-semibold text-white"
             >
-              {submitting
-                ? "Saving..."
-                : isEditMode
-                ? "Save Changes"
-                : "Create Agent"}
+              {submitting ? "Saving..." : "Save"}
             </button>
-
-            {isDisabled && (
-              <p className="mt-2 text-xs text-red-600">
-                Fix errors before submitting
-              </p>
-            )}
           </div>
         </div>
       </form>

@@ -7,7 +7,6 @@ import { ROUTES } from "../consts/routes";
 import LoginForm from "../components/LoginForm";
 import { useSelector } from "react-redux";
 import Settings from "../pages/settings/Settings";
-import HelpCenter from "../pages/helpcenter/HelpCenter";
 import Faq from "../pages/helpcenter/Faq";
 import HomePage from "../pages/homepage/homepage";
 import ArticlePage from "../pages/article/ArticlePage";
@@ -48,6 +47,25 @@ import SitemapFormPage from "../pages/sitemap/SitemapFormPage";
 import ContactUsListPage from "../pages/contact-us/ContactUs";
 import ContactUsViewPage from "../pages/contact-us/ContactUsViewPage ";
 import SMTPSettings from "../pages/settings/EmailConfiguration";
+// import FormTypeSelectionPage from "../pages/forms/FormManagePage";
+import AdminFormBuilder from "../pages/forms/forms";
+import Faqs from "../pages/helpcenter/Faq";
+import AddFaq from "../pages/helpcenter/AddFaq";
+import EditFaq from "../pages/helpcenter/EditFaq";
+import Categories from "../pages/faqCategories/Categories";
+import AddCategory from "../pages/faqCategories/AddCategory";
+import EditCategory from "../pages/faqCategories/EditCategory";
+import Dashboard from "../pages/dashboard/dashboard";
+import LeadLogs from "../pages/leadLogs/leadLogsPage";
+import FaqPage from "../pages/faqPage/FaqPage";
+import ArticleUIPage from "../pages/articlePage/ArticlePage";
+import FormUIPage from "../pages/formpage/FormPage";
+
+import FormCreateEditPage from "../pages/forms/FormPage";
+import FormManagePage from "../pages/forms/FormTypeSelectionPage";
+import StepsBuilderForm from "../pages/forms/StepsBuilderForm";
+import LeadDetails from "../pages/leadLogs/LeadDetails";
+import CountiesDetailPage from "../pages/counties/CountiesDetailPage";
 
 const Routes = () => {
   const navigate = useNavigate();
@@ -59,15 +77,31 @@ const Routes = () => {
     }
 
     if (token && window.location.pathname === "/login") {
-      navigate("/homepage", { replace: true });
+      navigate("/dashboard", { replace: true });
     }
-  }, [token]);
+  }, [token, navigate]);
+
+  useEffect(() => {
+    if (token && window.location.pathname === "/") {
+      navigate("/dashboard");
+    }
+  }, [token, navigate]);
   return (
     <RouteWrapper>
       <Route element={token ? <Layout /> : <AuthLayout />}>
+
+      
         <Route path={ROUTES.HOMEPAGE} element={<HomePage />} />
         <Route path={ROUTES.ABOUT} element={<AboutPage />} />
+
         <Route path={ROUTES.FAQ} element={<Faq />} />
+
+        <Route path="/faqs/add" element={<AddFaq />} />
+        <Route path="/faqs/edit/:id" element={<EditFaq />} />
+
+        <Route path="/faqs/categories" element={<Categories />} />
+        <Route path="/faqs/categories/add" element={<AddCategory />} />
+        <Route path="/faqs/categories/edit/:id" element={<EditCategory />} />
 
         <Route path={ROUTES.ARTICLE} element={<ArticlePage />} />
         <Route path={ROUTES.ARTICLE_CREATE} element={<ArticleFormPage />} />
@@ -98,11 +132,20 @@ const Routes = () => {
           element={<RealEstateAgentsFormPage />}
         />
 
-        <Route path={ROUTES.FORMS} element={<FormPage />} />
+        <Route path={ROUTES.FORMS} element={<FormManagePage />} />
+        <Route path="/admin/form-selection" element={<FormManagePage />} />
+        <Route path="/forms/create" element={<FormCreateEditPage />} />
+        <Route path="/forms/:id/edit" element={<FormCreateEditPage />} />
+        <Route path="/forms/:id/steps" element={<StepsBuilderForm />} />
 
+        <Route
+          path="/admin/form-builder/:formType"
+          element={<AdminFormBuilder />}
+        />
         <Route path={ROUTES.COUNTY} element={<CountyPage />} />
         <Route path={ROUTES.COUNTY_CREATE} element={<CountiesFormPage />} />
         <Route path={ROUTES.COUNTY_EDIT} element={<CountiesFormPage />} />
+        <Route path={ROUTES.COUNTY_VIEW} element={<CountiesDetailPage />} />
 
         <Route path={ROUTES.PLACES} element={<Places />} />
         <Route path={ROUTES.PLACES_CREATE} element={<PlaceFormPage />} />
@@ -121,18 +164,23 @@ const Routes = () => {
           element={<CreateFooterArticlePage />}
         />
         <Route path={ROUTES.FOOTER_EDIT} element={<EditFooterItemPage />} />
+        <Route path={ROUTES.FOOTER_EDIT_FOR_HEADER_AND_ADDRESS} element={<EditFooterItemPage />} />
+        {/* <Route path="/footer/edit/:tab" element={<EditFooterItemPage />} /> */}
         <Route
           path="/footer/create/:tab/select"
           element={<CreateFooterSelectPage />}
         />
 
-        <Route path={ROUTES.HOME} element={<p>Dashboard</p>} />
+        <Route path={ROUTES.HOME} element={<Dashboard />} />
         <Route path={ROUTES.TERM_OF_SERVICE} element={<TermOfServicePage />} />
         <Route path={ROUTES.PRIVACY_POLICY} element={<PrivacyPolicyPage />} />
         <Route path={ROUTES.QUOTES} element={<Quote />} />
+        <Route path={ROUTES.FAQPAGE} element={<FaqPage />} />
+        <Route path={ROUTES.ARTICLEPAGE} element={<ArticleUIPage />} />
+        <Route path={ROUTES.FORMPAGE} element={<FormUIPage />} />
 
         <Route path={ROUTES.LOGIN} element={<LoginForm />} />
-        <Route path={ROUTES.EMAIL} element={<EmailTemplateList />} />
+        <Route path={ROUTES.EMAIL_TEMPLATES} element={<EmailTemplateList />} />
         <Route path="/email/create" element={<CreateEmailTemplate />} />
         <Route
           path="/email/edit/:templateId"
@@ -149,13 +197,12 @@ const Routes = () => {
         <Route path="/sitemap/edit/:index" element={<SitemapFormPage />} />
         <Route path="/smtp" element={<SMTPSettings />} />
 
-
         <Route path={ROUTES.CONTACTUS} element={<ContactUsListPage />} />
-        <Route path={ROUTES.CONTACTUS_VIEW} element={<ContactUsViewPage />} /> 
+        <Route path={ROUTES.CONTACTUS_VIEW} element={<ContactUsViewPage />} />
         <Route path={ROUTES.SETTINGS} element={<Settings />} />
-        <Route path={ROUTES.HELP_CENTER} element={<HelpCenter />} />
-        <Route path={ROUTES.HELP_CENTER} element={<HelpCenter />} />
-        <Route path={ROUTES.HELP_CENTER} element={<HelpCenter />} />
+
+        <Route path={ROUTES.LEAD_LOGS} element={<LeadLogs />} />
+        <Route path="/leads/:id" element={<LeadDetails />} />
       </Route>
     </RouteWrapper>
   );

@@ -9,7 +9,8 @@ import { FaSearchengin } from "react-icons/fa6";
 import SEOSettings from "./SeoSettings";
 import SMTPSettings from "./EmailConfiguration";
 import { TfiEmail } from "react-icons/tfi";
-
+import LeadProfitSettingsPage from "./leadTypePage";
+import { MdSettingsSuggest } from "react-icons/md";
 
 const SettingTabs = () => {
   const list = [
@@ -28,11 +29,11 @@ const SettingTabs = () => {
       title: "Theme",
       content: <ThemeSettings/>,
     },
-     {
-      icon: FaSearchengin ,
-      title: "SEO Settings",
-      content: <SEOSettings/>,
-    },
+    //  {
+    //   icon: MdSettingsSuggest ,
+    //   title: "Lead Settings",
+    //   content: <LeadProfitSettingsPage/>,
+    // },
     {
       icon: TfiEmail ,
       title: "Email SMTP",

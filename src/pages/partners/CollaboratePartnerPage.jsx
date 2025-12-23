@@ -5,10 +5,12 @@ import { useSelector, useDispatch } from "react-redux";
 import { FaRegEye } from "react-icons/fa6";
 import { AiTwotoneEdit } from "react-icons/ai";
 import { RiDeleteBin5Line } from "react-icons/ri";
-import toast from "react-hot-toast";
+import { toast } from "react-toastify";
 import PageHeader from "../../components/PageHeader";
 import Pagination from "../../UI/pagination";
 import { fetchPartners, deletePartner } from "../../store/slices/partnersSlice";
+import api from "../../api/axios";
+import { LuLogs } from "react-icons/lu";
 
 export const CollaboratePartnerPage = () => {
   const navigate = useNavigate();
@@ -19,7 +21,7 @@ export const CollaboratePartnerPage = () => {
 
   const [page, setPage] = useState(1);
   const limit = 10;
-
+  const [limitLoading, setLimitLoading] = useState(false);
   const [filters, setFilters] = useState({
     isActive: "",
     isPremium: "",
@@ -31,6 +33,7 @@ export const CollaboratePartnerPage = () => {
   const debounceTimer = useRef(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [partnerToDelete, setPartnerToDelete] = useState(null);
+  const [partnerLimit, setPartnerLimit] = useState("");
 
   const applyFilters = (filterValues, requestPage = 1) => {
     const params = {
@@ -42,7 +45,6 @@ export const CollaboratePartnerPage = () => {
       page: requestPage,
       limit,
     };
-
     dispatch(fetchPartners(params))
       .unwrap()
       .catch(() => toast.error("Failed to fetch partners"));
@@ -62,7 +64,6 @@ export const CollaboratePartnerPage = () => {
 
   const handleDelete = () => {
     if (!partnerToDelete) return;
-
     dispatch(deletePartner(partnerToDelete))
       .unwrap()
       .then(() => {
@@ -70,11 +71,23 @@ export const CollaboratePartnerPage = () => {
         applyFilters(filters, page);
       })
       .catch(() => toast.error("Failed to delete partner"));
-
     setShowDeleteModal(false);
     setPartnerToDelete(null);
   };
+  useEffect(() => {
+    const fetchLimit = async () => {
+      try {
+        const { data } = await api.get("/partners/get-limit");
+        if (data?.success) {
+          setPartnerLimit(data.data.limit); // set limit from backend
+        }
+      } catch (error) {
+        toast.error("Failed to load partner limit");
+      }
+    };
 
+    fetchLimit();
+  }, []);
   const headerButtons = [
     {
       value: "+ Add Partner",
@@ -88,12 +101,13 @@ export const CollaboratePartnerPage = () => {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Collaborate Partners"
-        description="Manage your collaborated partners here."
+        title="Partners"
+        description="Manage your Partners here."
         buttonsList={headerButtons}
       />
+
       <div className="bg-white border border-slate-200 rounded-xl p-6 shadow flex flex-wrap gap-4">
-        <div className="bg-white border border-slate-200 rounded-xl p-6 shadow grid  md:flex md:flex-wrap gap-4 w-full">
+        <div className=" rounded-xl p-1  grid md:flex md:flex-wrap gap-4 w-full">
           <select
             className="p-2 border border-slate-300 rounded-lg min-w-[150px]"
             value={filters.isActive}
@@ -103,7 +117,7 @@ export const CollaboratePartnerPage = () => {
               fetchWithDelay(updated);
             }}
           >
-            <option value="">All</option>
+            <option value="">Status: All</option>
             <option value="true">Active</option>
             <option value="false">Inactive</option>
           </select>
@@ -117,7 +131,7 @@ export const CollaboratePartnerPage = () => {
               fetchWithDelay(updated);
             }}
           >
-            <option value="">All</option>
+            <option value="">User Type: All</option>
             <option value="true">Premium</option>
             <option value="false">Non-Premium</option>
           </select>
@@ -163,7 +177,55 @@ export const CollaboratePartnerPage = () => {
             }}
             onKeyDown={(e) => e.key === "Enter" && applyFilters(filters, 1)}
           />
+          <div className="flex items-center gap-2 grow justify-end">
+            <label
+              htmlFor="limit"
+              className="text-sm font-medium text-slate-700"
+            >
+              Partner Limit:
+            </label>
+            <input
+              id="limit"
+              type="number"
+              className="p-2 border border-slate-300 rounded-lg w-20"
+              value={partnerLimit}
+              onChange={(e) => setPartnerLimit(e.target.value)}
+              placeholder="Enter Limit"
+            />
+            <button
+              onClick={async () => {
+                if (!partnerLimit || partnerLimit <= 0) {
+                  return toast.error("Please enter a valid limit");
+                }
+                try {
+                  setLimitLoading(true);
+                  await api.put("/partners/limit", {
+                    limit: Number(partnerLimit),
+                  });
+                  toast.success("Partner limit updated successfully");
+                } catch (error) {
+                  toast.error("Failed to update partner limit");
+                } finally {
+                  setLimitLoading(false);
+                }
+              }}
+              className={`px-3 py-1 rounded-lg text-white 
+    ${
+      limitLoading
+        ? "bg-gray-400 cursor-not-allowed"
+        : "bg-primary hover:bg-primary/80"
+    }
+  `}
+            >
+              {limitLoading ? (
+                <span className="loader border-2 border-white border-t-transparent rounded-full w-4 h-4 inline-block animate-spin"></span>
+              ) : (
+                "✓"
+              )}
+            </button>
+          </div>
         </div>
+
         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm w-full">
           <div className="flex items-center justify-between px-6 py-4">
             <div>
@@ -184,7 +246,7 @@ export const CollaboratePartnerPage = () => {
                   <th className="px-6 py-3">Name</th>
                   <th className="px-6 py-3">City</th>
                   <th className="px-6 py-3">Postal Codes</th>
-                  <th className="px-6 py-3">Total Leads</th> {/* NEW */}
+                  <th className="px-6 py-3">Total Leads</th>
                   <th className="px-6 py-3">Premium</th>
                   <th className="px-6 py-3">Status</th>
                   <th className="px-6 py-3 text-center">Actions</th>
@@ -212,11 +274,20 @@ export const CollaboratePartnerPage = () => {
                         {p.name}
                       </td>
                       <td className="px-6 py-4">{p.city}</td>
-                      <td className="px-6 py-4">{p.postalCodes?.join(", ")}</td>
+                      <td className="px-6 py-4">
+                        {Array.isArray(p.postalCodes)
+                          ? p.postalCodes.join(", ")
+                          : p.postalCodes?.exact?.length > 0
+                          ? p.postalCodes.exact.map((c) => c.code).join(", ")
+                          : p.postalCodes?.ranges?.length > 0
+                          ? p.postalCodes.ranges
+                              .map((r) => `${r.from}-${r.to}`)
+                              .join(", ")
+                          : ""}
+                      </td>
                       <td className="px-6 py-4 font-semibold text-slate-900">
                         {p.leads.total ?? 0}
                       </td>
-
                       <td className="px-6 py-4">
                         <span
                           className={`inline-block px-3 py-1 rounded-full text-white text-xs font-bold ${
@@ -226,7 +297,6 @@ export const CollaboratePartnerPage = () => {
                           {p.isPremium ? "Premium" : "Non-Premium"}
                         </span>
                       </td>
-
                       <td className="px-6 py-4">
                         <span
                           className={`inline-block px-3 py-1 rounded-full text-white text-xs font-bold ${
@@ -236,21 +306,59 @@ export const CollaboratePartnerPage = () => {
                           {p.isActive ? "Active" : "Inactive"}
                         </span>
                       </td>
-
                       <td className="px-6 py-4">
                         <div className="flex items-center justify-center gap-2">
-                          <button
-                            className="rounded-full border border-slate-200 p-2 text-slate-500 hover:text-slate-900"
-                            onClick={() => navigate(`/partners/${p._id}`)}
-                          >
-                            <FaRegEye size={16} />
-                          </button>
-                          <button
-                            className="rounded-full border p-2 text-slate-500 hover:text-slate-900"
-                            onClick={() => navigate(`/partners/${p._id}/edit`)}
-                          >
-                            <AiTwotoneEdit size={16} />
-                          </button>
+                          {/* <div className="relative group">
+                            <button
+                              className="rounded-full border border-slate-200 p-2 text-slate-500 hover:text-slate-900"
+                              onClick={() => navigate(`/leads-logs/${p._id}`)}
+                            >
+                              <LuLogs size={16} />
+                            </button>
+
+                            <span
+                              className="absolute left-1/2 -translate-x-1/2 -top-8 
+                                  hidden group-hover:block 
+                                 bg-slate-800 text-white text-xs px-2 py-1 rounded shadow"
+                            >
+                              Logs
+                            </span>
+                          </div> */}
+
+                          <div className="relative group">
+                            <button
+                              className="rounded-full border border-slate-200 p-2 text-slate-500 hover:text-slate-900"
+                              onClick={() => navigate(`/partners/${p._id}`)}
+                            >
+                              <FaRegEye size={16} />
+                            </button>
+                            <span
+                              className="absolute left-1/2 -translate-x-1/2 -top-8 
+                                          hidden group-hover:block bg-slate-800 text-white text-xs 
+                                            px-2 py-1 rounded shadow"
+                            >
+                              View
+                            </span>
+                          </div>
+
+                          <div className="relative group">
+                            <button
+                              className="rounded-full border p-2 text-slate-500 hover:text-slate-900"
+                              onClick={() =>
+                                navigate(`/partners/${p._id}/edit`)
+                              }
+                            >
+                              <AiTwotoneEdit size={16} />
+                            </button>
+                            <span
+                              className="absolute left-1/2 -translate-x-1/2 -top-8 
+                                            hidden group-hover:block bg-slate-800 text-white text-xs 
+                                            px-2 py-1 rounded shadow"
+                            >
+                              Edit
+                            </span>
+                          </div>
+
                           <button
                             className="rounded-full border border-red-200 p-2 text-red-500 hover:bg-red-50"
                             onClick={() => {
@@ -270,7 +378,7 @@ export const CollaboratePartnerPage = () => {
                       colSpan="8"
                       className="px-6 py-6 text-center text-slate-500"
                     >
-                      No partners found
+                      No Partner found
                     </td>
                   </tr>
                 )}

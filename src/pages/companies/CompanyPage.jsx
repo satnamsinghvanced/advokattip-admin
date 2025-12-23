@@ -31,6 +31,7 @@ export const Company = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [companyToDelete, setCompanyToDelete] = useState(null);
   const [showUploadingFileLoader, setShowUploadingFileLoader] = useState(false);
+  const [search, setSearch] = useState("");
   const [manualCompany, setManualCompany] = useState({
     name: "",
     slug: "",
@@ -45,14 +46,16 @@ export const Company = () => {
   useEffect(() => {
     const fetchCompanies = async () => {
       try {
-        const res = await dispatch(getCompanies({ page, limit })).unwrap();
+        const res = await dispatch(
+          getCompanies({ page, limit, search })
+        ).unwrap();
         setTotalPages(res.totalPages || 1);
       } catch (err) {
         console.error(err);
       }
     };
     fetchCompanies();
-  }, [dispatch, page, limit]);
+  }, [dispatch, page, limit, search]);
 
   const handleDeleteCompany = async () => {
     if (!companyToDelete) return;
@@ -206,7 +209,7 @@ export const Company = () => {
       />
 
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="flex items-center justify-between  px-6 py-4">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between px-6 py-4">
           <div className="ml-4">
             <p className="text-sm font-semibold text-slate-900">
               Companies overview
@@ -215,6 +218,16 @@ export const Company = () => {
               {loading ? "Loading..." : `${totalCompanies} items`}
             </p>
           </div>
+          <input
+            type="text"
+            placeholder="Search companies..."
+            value={search}
+            onChange={(e) => {
+              setPage(1); // reset to first page
+              setSearch(e.target.value);
+            }}
+            className="px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+          />
         </div>
 
         <div className="overflow-x-auto">
@@ -225,6 +238,7 @@ export const Company = () => {
                 <th className="px-6 py-3">Company Name</th>
                 <th className="px-6 py-3">Address (Competitor)</th>
                 <th className="px-6 py-3">Description</th>
+                {/* <th className="px-6 py-3">Recommended</th> */}
                 <th className="px-6 py-3">Extractor's</th>
                 <th className="px-6 py-3">Actions</th>
               </tr>
@@ -269,6 +283,17 @@ export const Company = () => {
                         }}
                       ></div>
                     </td>
+                    {/* <td className="px-6 py-4">
+                      {company.isRecommended ? (
+                        <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-700">
+                          Recommended
+                        </span>
+                      ) : (
+                        <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-700 truncate">
+                          Not Recommended
+                        </span>
+                      )}
+                    </td> */}
                     <td className="px-6 py-4">
                       <div className="line-clamp-2 space-y-1 text-sm text-slate-700 break-words">
                         {company.extractor.map((item, idx) => (

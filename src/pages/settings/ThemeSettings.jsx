@@ -33,7 +33,8 @@ const ThemeSettings = () => {
     (state) => state.settings
   );
 
-  const [localTheme, setLocalTheme] = useState(null);
+  // CHANGE: Initialize with defaultTheme so it never shows "Loading" indefinitely
+  const [localTheme, setLocalTheme] = useState(defaultTheme);
   const [editingKey, setEditingKey] = useState(null);
   const [tempColor, setTempColor] = useState("");
   const [hasChanges, setHasChanges] = useState(false);
@@ -114,35 +115,39 @@ const ThemeSettings = () => {
   };
 
   const resetAll = () => {
-    setLocalTheme(theme);
+    setLocalTheme(theme || defaultTheme);
     setHasChanges(false);
-    Object.keys(theme).forEach((key) => {
-      document.documentElement.style.setProperty(`--${key}`, theme[key]);
+    const source = theme || defaultTheme;
+    Object.keys(source).forEach((key) => {
+      document.documentElement.style.setProperty(`--${key}`, source[key]);
     });
   };
 
   const saveToServer = () => {
-    if (!themeId) return toast.error("Theme ID not found!");
-    dispatch(updateTheme({ id: themeId, data: localTheme }))
+    // CHANGE: If themeId is missing (data: null), use "new" to create it
+    const idToUse = themeId || "new";
+    dispatch(updateTheme({ id: idToUse, data: localTheme }))
       .unwrap()
       .then(() => {
         toast.success("Theme saved successfully!");
         setHasChanges(false);
+        if (idToUse === "new") dispatch(fetchTheme());
       })
       .catch((err) => toast.error(err));
   };
 
   const restoreTheme = () => {
-    if (!themeId) return toast.error("Theme ID not found!");
+    const idToUse = themeId || "new";
     setLocalTheme(defaultTheme);
     Object.keys(defaultTheme).forEach((key) => {
       document.documentElement.style.setProperty(`--${key}`, defaultTheme[key]);
     });
-    dispatch(updateTheme({ id: themeId, data: defaultTheme }))
+    dispatch(updateTheme({ id: idToUse, data: defaultTheme }))
       .unwrap()
       .then(() => toast.success("Default theme restored and saved!"))
       .catch((err) => toast.error(err));
   };
+
   const handleLogoChange = (field, file) => {
     setLogoFiles((prev) => ({ ...prev, [field]: file }));
     if (file) {
@@ -156,14 +161,8 @@ const ThemeSettings = () => {
     if (text) setLogoFiles((prev) => ({ ...prev, [field]: null }));
   };
 
-  // const handleDeleteLogo = (field) => {
-  //   setLogoFiles((prev) => ({ ...prev, [field]: null }));
-  //   setWordmarkText((prev) => ({ ...prev, [field]: "" }));
-  //   setRemovedLogos((prev) => ({ ...prev, [field]: true }));
-  // };
-
   const saveLogos = async () => {
-    if (!themeId) return toast.error("Theme ID not found!");
+    if (!themeId) return toast.error("Please save theme colors first to initialize settings!");
 
     const formData = new FormData();
     Object.keys(logoFiles).forEach((key) => {
@@ -173,21 +172,16 @@ const ThemeSettings = () => {
 
     if (wordmarkText.wordmark)
       formData.append("wordmarkText", wordmarkText.wordmark);
+
     if (wordmarkText.wordmarkDark)
       formData.append("wordmarkDarkText", wordmarkText.wordmarkDark);
 
     try {
       await dispatch(uploadLogos({ id: themeId, files: formData })).unwrap();
       toast.success("Logos updated successfully!");
-      setEditingLogos(false);
       setRemovedLogos({});
       setLogoFiles({
-        logo: null,
-        logoDark: null,
-        wordmark: null,
-        wordmarkDark: null,
-        lettermark: null,
-        tagline: null,
+        logo: null, logoDark: null, wordmark: null, wordmarkDark: null, lettermark: null, tagline: null,
       });
       dispatch(fetchTheme());
     } catch (err) {
@@ -195,60 +189,26 @@ const ThemeSettings = () => {
     }
   };
 
-  if (loading || !localTheme)
-    return <p className="p-10 text-center">Loading theme...</p>;
-
-  const IMAGE_URL = "http://localhost:9090/";
+  // CHANGE: Removed the return Loading block so design shows instantly
+  const IMAGE_URL = import.meta.env.VITE_IMAGE_URL;
 
   return (
     <div>
       <div className="bg-white rounded-2xl p-8 shadow-md relative space-y-8">
         <div>
           <div className="flex justify-between items-center mb-4">
-            <h4 className="font-bold text-xl">Logos Settings</h4>
-            {!editingLogos && (
-              <button
-                onClick={() => setEditingLogos(true)}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg text-slate-500"
-              >
-                <AiTwotoneEdit className="w-5 h-5" />
-              </button>
-            )}
+            <h4 className="font-bold text-xl">Logo's Settings</h4>
+            {loading && <span className="text-xs text-blue-400">Loading...</span>}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {[
               { key: "logo", label: "Logo", type: "image", required: true },
-              {
-                key: "logoDark",
-                label: "Logo Dark",
-                type: "image",
-                required: false,
-              },
-              {
-                key: "wordmark",
-                label: "Wordmark",
-                type: "image+text",
-                required: true,
-              },
-              {
-                key: "wordmarkDark",
-                label: "Wordmark Dark",
-                type: "image+text",
-                required: false,
-              },
-              {
-                key: "lettermark",
-                label: "Lettermark",
-                type: "image",
-                required: false,
-              },
-              {
-                key: "tagline",
-                label: "Tagline",
-                type: "image",
-                required: false,
-              },
+              { key: "logoDark", label: "Logo Dark", type: "image", required: false },
+              { key: "wordmark", label: "Wordmark", type: "image+text", required: true },
+              { key: "wordmarkDark", label: "Wordmark Dark", type: "image+text", required: false },
+              { key: "lettermark", label: "Lettermark", type: "image", required: false },
+              { key: "tagline", label: "Tagline", type: "image", required: false },
             ].map(({ key, label, type, required }) => (
               <div
                 key={key}
@@ -264,10 +224,7 @@ const ThemeSettings = () => {
                       !removedLogos[key] &&
                       !logoFiles[key] && (
                         <img
-                          src={`${IMAGE_URL}${logos[key].replaceAll(
-                            "\\",
-                            "/"
-                          )}`}
+                          src={`${IMAGE_URL}${logos[key].replaceAll("\\", "/")}`}
                           alt={label}
                           className="h-16"
                         />
@@ -277,27 +234,6 @@ const ThemeSettings = () => {
                         src={URL.createObjectURL(logoFiles[key])}
                         alt={label}
                         className="h-16"
-                      />
-                    )}
-                    {/* {editingLogos &&
-                      ((logos[key] && !removedLogos[key]) ||
-                        logoFiles[key]) && (
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteLogo(key)}
-                          className="px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700"
-                        >
-                          <RiDeleteBin5Line />
-                        </button>
-                      )} */}
-                    {editingLogos && (
-                      <input
-                        type="file"
-                        accept="image/*"
-                        disabled={wordmarkText[key]}
-                        onChange={(e) =>
-                          handleLogoChange(key, e.target.files[0])
-                        }
                       />
                     )}
                     <input
@@ -311,7 +247,6 @@ const ThemeSettings = () => {
                 {type.includes("text") && editingLogos && (
                   <input
                     type="text"
-                    
                     placeholder="Enter text"
                     value={wordmarkText[key] || ""}
                     disabled={logoFiles[key]}
@@ -325,22 +260,6 @@ const ThemeSettings = () => {
             ))}
           </div>
 
-          {editingLogos && (
-            <div className="flex gap-4 mt-4">
-              <button
-                onClick={saveLogos}
-                className="px-6 py-3 bg-[#161925] text-white rounded-xl hover:bg-black transition"
-              >
-                Save
-              </button>
-              <button
-                onClick={() => setEditingLogos(false)}
-                className="px-6 py-3 border rounded-xl hover:bg-gray-200 transition"
-              >
-                Cancel
-              </button>
-            </div>
-          )}
           <button
             onClick={saveLogos}
             className="mt-4 px-6 py-3 bg-[#161925] text-white rounded-xl hover:bg-black transition w-full md:w-75"
@@ -407,7 +326,7 @@ const ThemeSettings = () => {
                     <div className="flex items-center gap-3">
                       <input
                         type="color"
-                        className="w-12 h-10 rounded border"
+                        className="w-12 h-10 rounded"
                         value={tempColor}
                         onChange={(e) => setTempColor(e.target.value)}
                       />
@@ -430,7 +349,8 @@ const ThemeSettings = () => {
             ))}
           </div>
 
-          {hasChanges && (
+          {/* CHANGE: Added !themeId check so the Save button shows up even if DB is empty */}
+          {(hasChanges || !themeId) && (
             <div className="mt-10 flex justify-between">
               <button
                 onClick={resetAll}
@@ -445,7 +365,7 @@ const ThemeSettings = () => {
                 className="px-8 py-3 bg-[#161925] text-white rounded-xl shadow-md hover:bg-black active:scale-95 transition disabled:opacity-50 flex items-center gap-2"
               >
                 <FiSave className="text-lg" />
-                {saving ? "Saving..." : "Save"}
+                {saving ? "Saving..." : (themeId ? "Save" : "Initialize")}
               </button>
             </div>
           )}

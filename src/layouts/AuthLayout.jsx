@@ -1,19 +1,31 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Outlet } from "react-router";
 import loginBanner from "/images/auth-banner.webp";
 import logo from "/images/logo.png";
-import ThemeSwitch from "../UI/ThemeSwitch";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchTheme } from "../store/slices/website_settingsSlice";
+import { checkAuth } from "../store/slices/user";
 
 const AuthLayout = () => {
+  const dispatch = useDispatch();
+  const { logos } = useSelector((state) => state.settings);
+  // console.log(logos);
+  useEffect(() => {
+    dispatch(checkAuth());
+    dispatch(fetchTheme());
+  }, [dispatch]);
+
+  const IMAGE_URL = import.meta.env.VITE_IMAGE_URL;
   return (
     <main id="main" className="bg-gray-50 dark:bg-blue-950 dark:text-white">
-      {/* <div className="fixed end-7 top-3 z-[5] flex gap-4">
-        <ThemeSwitch isMiniSidebarOpen={true} />
-      </div> */}
       <div className="grid grid-cols-[1fr_1.5fr] h-screen overflow-hidden">
         <figure className="h-full">
           <div className="bg-[#161925] w-full h-full flex items-center justify-center">
-            <img src={logo} alt="Boligtip" className="w-80 h-18" />
+            <img
+              src={`${IMAGE_URL}${logos?.logoDark}`}
+              alt="Boligtip"
+              className="w-80 h-18"
+            />
           </div>
         </figure>
         <div className="flex items-center justify-center">

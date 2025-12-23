@@ -3,6 +3,7 @@ import axios from "axios";
 
 const BASE_URL = import.meta.env.VITE_API_URL;
 const IMAGE_URL = import.meta.env.VITE_API_URL_IMAGE;
+const token = localStorage.getItem("token");
 
 const fixImageUrl = (url) => {
   if (!url) return null;
@@ -11,9 +12,9 @@ const fixImageUrl = (url) => {
 
 export const getArticles = createAsyncThunk(
   "articles/getArticles",
-  async ({ page = 1, limit = 10 } = {}, { rejectWithValue }) => {
+  async ({ page = 1, limit = 10,search ="" } = {}, { rejectWithValue }) => {
     try {
-      const res = await axios.get(`${BASE_URL}/article?page=${page}&limit=${limit}`);
+      const res = await axios.get(`${BASE_URL}/article?page=${page}&limit=${limit}&search=${search}`);
       return {
         data: res.data.data.map((item) => ({
           ...item,
@@ -44,7 +45,7 @@ export const createArticle = createAsyncThunk(
   async (formData, { rejectWithValue }) => {
     try {
       const res = await axios.post(`${BASE_URL}/article/create`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
+        headers: { "Content-Type": "multipart/form-data",  Authorization: `${token}` },
       });
       return { ...res.data.data, image: fixImageUrl(res.data.data.image) };
     } catch (err) {

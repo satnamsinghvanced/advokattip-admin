@@ -13,8 +13,12 @@ import {
   getArticleById,
   updateArticle,
 } from "../../store/slices/articleSlice";
-import { getCategories } from "../../store/slices/articleCategoriesSlice";
+import {
+  getCategories,
+  getCategoriesAll,
+} from "../../store/slices/articleCategoriesSlice";
 import { toast } from "react-toastify";
+import ImageUploader from "../../UI/ImageUpload";
 
 const quillModules = {
   toolbar: [
@@ -49,25 +53,51 @@ const ArticleFormPage = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { selectedArticle } = useSelector((state) => state.articles);
-  const { categories } = useSelector((state) => state.categories);
-
+  const { categoriesAll } = useSelector((state) => state.categories);
+  // console.log(categoriesAll )
   const [form, setForm] = useState({
     title: "",
     slug: "",
-    original_slug: "",
+    articleTags: "",
     excerpt: "",
     description: "",
     categoryId: "",
     showDate: "",
-    language: "en",
-    originalSlug: "",
+    articlePosition: "",
+
+    metaTitle: "",
+    metaDescription: "",
+    metaKeywords: "",
+    metaImage: "",
+
+    canonicalUrl: "",
+    jsonLd: "",
+
+    ogTitle: "",
+    ogDescription: "",
+    ogImage: "",
+    ogType: "website",
+
+    publishedDate: "",
+    lastUpdatedDate: "",
+    showPublishedDate: false,
+    showLastUpdatedDate: false,
+
+    robots: {
+      noindex: false,
+      nofollow: false,
+      noarchive: false,
+      nosnippet: false,
+      noimageindex: false,
+      notranslate: false,
+    },
   });
   const [imageFile, setImageFile] = useState(null);
   const [previewImage, setPreviewImage] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    dispatch(getCategories());
+    dispatch(getCategoriesAll());
   }, [dispatch]);
 
   useEffect(() => {
@@ -87,14 +117,33 @@ const ArticleFormPage = () => {
       setForm({
         title: selectedArticle.title || "",
         slug: selectedArticle.slug || "",
-        original_slug: selectedArticle.original_slug || "",
+        articleTags: selectedArticle.articleTags || "",
         excerpt: selectedArticle.excerpt || "",
         description: selectedArticle.description || "",
         categoryId: selectedArticle.categoryId?._id || "",
+        articlePosition: selectedArticle.articlePosition || 0,
         showDate: selectedArticle.showDate
           ? selectedArticle.showDate.split("T")[0]
           : "",
-        language: selectedArticle.language || "en",
+        metaTitle: selectedArticle.metaTitle || "",
+        metaDescription: selectedArticle.metaDescription || "",
+        metaKeywords: selectedArticle.metaKeywords || "",
+        metaImage: selectedArticle.metaImage || "",
+
+        canonicalUrl: selectedArticle.canonicalUrl || "",
+        jsonLd: selectedArticle.jsonLd || "",
+
+        ogTitle: selectedArticle.ogTitle || "",
+        ogDescription: selectedArticle.ogDescription || "",
+        ogImage: selectedArticle.ogImage || "",
+        ogType: selectedArticle.ogType || "website",
+
+        // publishedDate: selectedArticle.publishedDate || "",
+        // lastUpdatedDate: selectedArticle.lastUpdatedDate || "",
+        // showPublishedDate: selectedArticle.showPublishedDate || false,
+        // showLastUpdatedDate: selectedArticle.showLastUpdatedDate || false,
+
+        robots: selectedArticle.robots,
       });
       setPreviewImage(selectedArticle.image || "");
     }
@@ -107,7 +156,7 @@ const ArticleFormPage = () => {
         variant: "white",
         className:
           "border border-slate-300 text-slate-700 hover:border-slate-400 hover:bg-white",
-        onClick: () => navigate( "/articles"),
+        onClick: () => navigate("/articles"),
       },
     ],
     [navigate, isEditMode, articleId]
@@ -118,8 +167,33 @@ const ArticleFormPage = () => {
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
+  const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
+  const allowedExtensions = [
+    "image/jpeg",
+    "image/png",
+    "image/gif",
+    "image/webp",
+    "image/svg+xml",
+    "image/x-icon",
+  ];
   const handleImageChange = (event) => {
     const file = event.target.files?.[0];
+
+    if (!file) return;
+
+    // MIME type check
+    if (!allowedExtensions.includes(file.type)) {
+      toast.error(
+        "Invalid file type. Please upload jpeg, png, gif, webp, svg or ico."
+      );
+      return;
+    }
+
+    // Size check
+    if (file.size > MAX_FILE_SIZE) {
+      toast.error("File size too large. Maximum allowed size is 2MB.");
+      return;
+    }
     setImageFile(file || null);
     setPreviewImage(file ? URL.createObjectURL(file) : "");
   };
@@ -131,7 +205,11 @@ const ArticleFormPage = () => {
     const formData = new FormData();
     Object.entries(form).forEach(([key, value]) => {
       if (value !== null && value !== undefined) {
-        formData.append(key, value);
+        if (key === "robots") {
+          formData.append("robots", JSON.stringify(value)); // FIX HERE
+        } else {
+          formData.append(key, value);
+        }
       }
     });
     if (imageFile) {
@@ -179,14 +257,19 @@ const ArticleFormPage = () => {
             {[
               { label: "Title", name: "title" },
               { label: "Slug", name: "slug" },
-               { label: "Article Tags", name: "articleTags" },
-              { label: "Original slug ", name: "originalSlug" },
+              { label: "Article Tags", name: "articleTags" },
+              {
+                label: "Article Position",
+                name: "articlePosition",
+                type: "number",
+              },
             ].map((field) => (
               <div key={field.name}>
                 <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                   {field.label}
                 </label>
                 <input
+                  type={field.type || "text"}
                   name={field.name}
                   value={form[field.name]}
                   onChange={handleChange}
@@ -210,7 +293,7 @@ const ArticleFormPage = () => {
                 required
               >
                 <option value="">Select a category</option>
-                {categories.map((category) => (
+                {categoriesAll.map((category) => (
                   <option key={category._id} value={category._id}>
                     {category.title}
                   </option>
@@ -236,17 +319,6 @@ const ArticleFormPage = () => {
           <div className="grid gap-4 md:grid-cols-2">
             <div>
               <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Language
-              </label>
-              <input
-                name="language"
-                value={form.language}
-                onChange={handleChange}
-                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-primary focus:ring-2 focus:ring-secondary/30"
-              />
-            </div>
-            <div>
-              <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                 Excerpt
               </label>
               <textarea
@@ -266,17 +338,16 @@ const ArticleFormPage = () => {
             <div className="mt-2 rounded-2xl border border-slate-200 p-1">
               <ReactQuill
                 value={form.description}
-                onChange={(value) => setForm((prev) => ({ ...prev, description: value }))}
+                onChange={(value) =>
+                  setForm((prev) => ({ ...prev, description: value }))
+                }
                 modules={quillModules}
                 formats={quillFormats}
                 className="rounded-2xl [&_.ql-container]:rounded-b-2xl [&_.ql-toolbar]:rounded-t-2xl"
               />
             </div>
           </div>
-        </div>
-
-        <div className="space-y-6">
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm mt-4">
             <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
               Featured image
             </label>
@@ -313,6 +384,156 @@ const ArticleFormPage = () => {
               </label>
             )}
           </div>
+        </div>
+
+        <div className="space-y-6">
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-6">
+            {/* SEO SECTION */}
+            <div className="pt-6">
+              <h2 className="text-xl font-bold mb-4">SEO Settings</h2>
+
+              {/* Meta Title */}
+              <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Meta Title
+              </label>
+              <input
+                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-primary"
+                value={form.metaTitle}
+                onChange={(e) =>
+                  setForm({ ...form, metaTitle: e.target.value })
+                }
+              />
+
+              {/* Meta Description */}
+              <label className="mt-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Meta Description
+              </label>
+              <textarea
+                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm h-24 focus:border-primary"
+                value={form.metaDescription}
+                onChange={(e) =>
+                  setForm({ ...form, metaDescription: e.target.value })
+                }
+              />
+
+              {/* Keywords */}
+              <label className="mt-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Meta Keywords (comma separated)
+              </label>
+              <input
+                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-primary"
+                value={form.metaKeywords}
+                onChange={(e) =>
+                  setForm({ ...form, metaKeywords: e.target.value })
+                }
+              />
+
+              {/* Meta Image */}
+              <ImageUploader
+                label="Meta Image"
+                value={form.metaImage}
+                onChange={(img) => setForm({ ...form, metaImage: img })}
+              />
+            </div>
+
+            {/* OG TAGS */}
+            <div className="border-t pt-6">
+              <h2 className="text-xl font-bold mb-4">Open Graph (OG) Tags</h2>
+
+              <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                OG Title
+              </label>
+              <input
+                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-primary"
+                value={form.ogTitle}
+                onChange={(e) => setForm({ ...form, ogTitle: e.target.value })}
+              />
+
+              <label className="mt-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                OG Description
+              </label>
+              <textarea
+                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm h-24 focus:border-primary"
+                value={form.ogDescription}
+                onChange={(e) =>
+                  setForm({ ...form, ogDescription: e.target.value })
+                }
+              />
+
+              <ImageUploader
+                label="OG Image"
+                value={form.ogImage}
+                onChange={(img) => setForm({ ...form, ogImage: img })}
+              />
+
+              <label className="mt-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                OG Type
+              </label>
+              <input
+                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-primary"
+                value={form.ogType}
+                onChange={(e) => setForm({ ...form, ogType: e.target.value })}
+              />
+            </div>
+
+            {/* ADVANCED SEO */}
+            <div className="border-t pt-6">
+              <h2 className="text-xl font-bold mb-4">Advanced SEO</h2>
+
+              <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Canonical URL
+              </label>
+              <input
+                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-primary"
+                value={form.canonicalUrl}
+                onChange={(e) =>
+                  setForm({ ...form, canonicalUrl: e.target.value })
+                }
+              />
+
+              <label className="mt-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                JSON-LD Schema
+              </label>
+              <textarea
+                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm h-28 focus:border-primary"
+                value={form.jsonLd}
+                onChange={(e) => setForm({ ...form, jsonLd: e.target.value })}
+              />
+
+              <label className="mt-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Custom Head Tags
+              </label>
+              <textarea
+                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm h-24 focus:border-primary"
+                value={form.customHead}
+                onChange={(e) =>
+                  setForm({ ...form, customHead: e.target.value })
+                }
+              />
+            </div>
+
+            {/* ROBOTS SETTINGS */}
+            <div className="border-t pt-6">
+              <h2 className="text-xl font-bold mb-4">Robots Settings</h2>
+
+              {Object.keys(form.robots).map((key) => (
+                <label key={key} className="flex items-center gap-2">
+                  <input
+                    className="!relative"
+                    type="checkbox"
+                    checked={form.robots[key]}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        robots: { ...form.robots, [key]: e.target.checked },
+                      })
+                    }
+                  />
+                  <span className="capitalize">{key}</span>
+                </label>
+              ))}
+            </div>
+          </div>
 
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <button
@@ -334,4 +555,3 @@ const ArticleFormPage = () => {
 };
 
 export default ArticleFormPage;
-
