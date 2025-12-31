@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { MdOutlineFindInPage } from "react-icons/md";
 import { MdOutlineRealEstateAgent } from "react-icons/md";
+import { GoLaw } from "react-icons/go";
 import { FaQ } from "react-icons/fa6";
 import { HiChevronDown, HiChevronRight } from "react-icons/hi";
 import { TbLogs } from "react-icons/tb";
@@ -114,9 +115,9 @@ const SideBar = ({ toggleSidebar, isMiniSidebarOpen, onCloseSidebar }) => {
           icon: FaQ,
         },
         {
-          name: "Real Estate Agents",
+          name: "Lawyer Page",
           href: ROUTES.REAL_ESTATE_AGENTS,
-          icon: MdOutlineRealEstateAgent,
+          icon: GoLaw,
         },
         {
           name: "Footer",

@@ -87,20 +87,20 @@ const RealEstateAgentsPage = () => {
 
   const handleSave = async () => {
     if (!agent?._id) {
-        toast.error("No agent found to update");
+        toast.error("No lawyer found to update");
         return;
     }
     const res = await dispatch(updateAgent({ id: agent._id, agentData: form }));
 
     if (res.error) {
-         toast.error("Failed to update Real Estate Agents Page");
+         toast.error("Failed to update Lawyer Page");
     } else {
         //  toast.success("Real Estate Agents Page Updated Successfully!");
     }
   };
 
   return (
-    <Section title="Real Estate Agents Page" onSave={handleSave} loading={loading}>
+    <Section title="Lawyer Page" onSave={handleSave} loading={loading}>
       {loading ? (
         <div className="animate-pulse space-y-4">
           <div className="h-6 bg-gray-300 rounded w-1/3"></div>
