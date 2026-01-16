@@ -138,7 +138,7 @@ const CountiesFormPage = () => {
 
         companies: Array.isArray(selectedCounty.companies)
           ? selectedCounty.companies.map((c, index) => ({
-              companyId: String(c.companyId._id || c.companyId),
+              companyId: String(c.companyId?._id || c.companyId),
               rank: c.rank ?? index + 1,
               isRecommended: !!c.isRecommended,
             }))
@@ -397,7 +397,7 @@ const CountiesFormPage = () => {
                 <div className="flex flex-wrap gap-2">
                   {form.companies.map((item) => {
                     const company = allCompanies.find(
-                      (c) => c._id === item.companyId
+                      (c) => c?._id === item.companyId
                     );
                     return (
                       <span
@@ -448,14 +448,14 @@ const CountiesFormPage = () => {
                   )
                   .map((company) => (
                     <label
-                      key={company._id}
+                      key={company?._id}
                       className="flex items-center gap-2 p-2 hover:bg-slate-100 cursor-pointer rounded"
                     >
                       <input
                         type="checkbox"
                         className="!relative"
                         checked={form.companies.some(
-                          (c) => c.companyId === company._id
+                          (c) => c.companyId === company?._id
                         )}
                         onChange={(e) => {
                           let updated = [...form.companies];
@@ -465,13 +465,13 @@ const CountiesFormPage = () => {
                               return;
                             }
                             updated.push({
-                              companyId: company._id,
+                              companyId: company?._id,
                               rank: updated.length + 1,
                               isRecommended: false,
                             });
                           } else {
                             updated = updated.filter(
-                              (c) => c.companyId !== company._id
+                              (c) => c.companyId !== company?._id
                             );
                           }
                           setForm((prev) => ({
@@ -490,7 +490,7 @@ const CountiesFormPage = () => {
             <div className="space-y-2">
               {form.companies.map((item, index) => {
                 const company = allCompanies.find(
-                  (c) => c._id === item.companyId
+                  (c) => c?._id === item.companyId
                 );
 
                 return (
