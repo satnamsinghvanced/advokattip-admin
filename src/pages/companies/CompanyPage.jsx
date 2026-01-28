@@ -48,7 +48,6 @@ export const Company = () => {
 
   const [uploadFile, setUploadFile] = useState(null);
 
-  // Fetch companies with search support
   const fetchCompanies = useCallback(async () => {
     try {
       const res = await dispatch(
