@@ -36,10 +36,8 @@ const PlaceDetailPage = () => {
       variant: "primary",
       className:
         "!bg-primary !text-white !border-primary hover:!bg-secondary hover:!border-secondary",
-      onClick: () => {
-        const redirectUrl = page ? `/places?page=${page}` : "/places";
-        navigate(redirectUrl);
-      },
+      onClick: () =>
+        navigate(`/place/${placeId}/edit${page ? `?page=${page}` : ""}`),
     },
   ];
 
