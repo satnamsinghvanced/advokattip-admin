@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useDispatch, useSelector, shallowEqual } from "react-redux";
-import { useNavigate, useParams } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import PageHeader from "../../components/PageHeader";
 import {
   clearSelectedCounty,
@@ -13,32 +13,6 @@ import { toast } from "react-toastify";
 import { RiDeleteBin5Line } from "react-icons/ri";
 import ImageUploader from "../../UI/ImageUpload";
 import { getCompaniesAll } from "../../store/slices/companySlice";
-import ReactQuill from "react-quill-new";
-const quillModules = {
-  toolbar: [
-    [{ header: [1, 2, 3, false] }],
-    ["bold", "italic", "underline", "strike"],
-    [{ list: "ordered" }, { list: "bullet" }],
-    ["blockquote", "code-block"],
-    [{ align: [] }],
-    ["link", "image"],
-    ["clean"],
-  ],
-};
-
-const quillFormats = [
-  "header",
-  "bold",
-  "italic",
-  "underline",
-  "strike",
-  "list",
-  "blockquote",
-  "code-block",
-  "align",
-  "link",
-  "image",
-];
 
 const requiredFields = ["name", "slug"];
 
@@ -53,6 +27,7 @@ function labelFor(name) {
 
 const CountiesFormPage = () => {
   const { countyId } = useParams();
+  const [searchParams] = useSearchParams();
   const isEditMode = Boolean(countyId);
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -303,15 +278,18 @@ const CountiesFormPage = () => {
 
       if (isEditMode) {
         await dispatch(
-          updateCounty({ id: countyId,countyData: payload, isFormData })
+          updateCounty({ id: countyId, countyData: payload, isFormData }),
         ).unwrap();
         toast.success("County updated!");
       } else {
-        await dispatch(createCounty({countyData: payload, isFormData })).unwrap();
+        await dispatch(
+          createCounty({ countyData: payload, isFormData }),
+        ).unwrap();
         toast.success("County created!");
       }
-
-      navigate("/counties");
+      const page = searchParams.get("page");
+      const redirectUrl = page ? `/counties?page=${page}` : "/counties";
+      navigate(redirectUrl);
     } catch (err) {
       toast.error(err?.data?.message || err.message);
     } finally {
@@ -338,10 +316,16 @@ const CountiesFormPage = () => {
               variant: "white",
               className:
                 "border border-slate-300 text-slate-700 hover:border-slate-400 hover:bg-white",
-              onClick: () => navigate("/counties"),
+              onClick: () => {
+                const page = searchParams.get("page");
+                const redirectUrl = page
+                  ? `/counties?page=${page}`
+                  : "/counties";
+                navigate(redirectUrl);
+              },
             },
           ],
-          [navigate]
+          [navigate,searchParams],
         )}
       />
 
@@ -397,7 +381,7 @@ const CountiesFormPage = () => {
                 <div className="flex flex-wrap gap-2">
                   {form.companies.map((item) => {
                     const company = allCompanies.find(
-                      (c) => c?._id === item.companyId
+                      (c) => c?._id === item.companyId,
                     );
                     return (
                       <span
@@ -412,7 +396,7 @@ const CountiesFormPage = () => {
                             setForm((prev) => ({
                               ...prev,
                               companies: prev.companies.filter(
-                                (x) => x !== item
+                                (x) => x !== item,
                               ),
                             }));
                           }}
@@ -444,7 +428,7 @@ const CountiesFormPage = () => {
                   ?.filter((c) =>
                     c.companyName
                       .toLowerCase()
-                      .includes(companySearch.toLowerCase())
+                      .includes(companySearch.toLowerCase()),
                   )
                   .map((company) => (
                     <label
@@ -455,7 +439,7 @@ const CountiesFormPage = () => {
                         type="checkbox"
                         className="!relative"
                         checked={form.companies.some(
-                          (c) => c.companyId === company?._id
+                          (c) => c.companyId === company?._id,
                         )}
                         onChange={(e) => {
                           let updated = [...form.companies];
@@ -471,7 +455,7 @@ const CountiesFormPage = () => {
                             });
                           } else {
                             updated = updated.filter(
-                              (c) => c.companyId !== company?._id
+                              (c) => c.companyId !== company?._id,
                             );
                           }
                           setForm((prev) => ({
@@ -490,7 +474,7 @@ const CountiesFormPage = () => {
             <div className="space-y-2">
               {form.companies.map((item, index) => {
                 const company = allCompanies.find(
-                  (c) => c?._id === item.companyId
+                  (c) => c?._id === item.companyId,
                 );
 
                 return (
@@ -793,8 +777,8 @@ const CountiesFormPage = () => {
               {submitting
                 ? "Saving..."
                 : isEditMode
-                ? "Save Changes"
-                : "Create County"}
+                  ? "Save Changes"
+                  : "Create County"}
             </button>
 
             {isDisabled && hasErrors && (

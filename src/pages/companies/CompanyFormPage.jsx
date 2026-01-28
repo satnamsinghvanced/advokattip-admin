@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import PageHeader from "../../components/PageHeader";
-import ReactQuill from "react-quill-new";
 import "react-quill-new/dist/quill.snow.css";
 import { RiDeleteBin5Line } from "react-icons/ri";
 import {
@@ -15,42 +14,11 @@ import { uploadImage } from "../../store/slices/imageUpload";
 import { toast } from "react-toastify";
 import ImageUploader from "../../UI/ImageUpload";
 
-const quillModules = {
-  toolbar: [
-    [{ header: [1, 2, 3, false] }],
-    ["bold", "italic", "underline", "strike"],
-    [{ list: "ordered" }, { list: "bullet" }],
-    ["blockquote", "code-block"],
-    [{ align: [] }],
-    ["link", "image"],
-    ["clean"],
-  ],
-};
-
-const quillFormats = [
-  "header",
-  "bold",
-  "italic",
-  "underline",
-  "strike",
-  "list",
-  "blockquote",
-  "code-block",
-  "align",
-  "link",
-  "image",
-];
-
-const requiredFields = [
-  "companyName",
-  // "email",
-  // "zipCode",
-  "address",
-  "websiteAddress",
-];
+const requiredFields = ["companyName", "address", "websiteAddress"];
 
 const CompanyFormPage = () => {
   const { companyId } = useParams();
+  const [searchParams] = useSearchParams();
   const isEditMode = Boolean(companyId);
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -187,15 +155,6 @@ const CompanyFormPage = () => {
       if (!value || !String(value).trim()) {
         message = `${labelFor(name)} is required`;
       }
-      //  else {
-      //   if (name === "email") {
-      //     const re =
-      //       /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@(([^<>()[\]\\.,;:\s@"]+\.)+[^<>()[\]\\.,;:\s@"]{2,})$/i;
-      //     if (!re.test(String(value).toLowerCase())) {
-      //       message = "Please enter a valid email address";
-      //     }
-      //   }
-      // }
     }
     setErrors((prev) => ({ ...prev, [name]: message }));
     return message === "";
@@ -206,13 +165,6 @@ const CompanyFormPage = () => {
     requiredFields.forEach((f) => {
       const v = form[f];
       if (!v || !String(v).trim()) newErrors[f] = `${labelFor(f)} is required`;
-      // if (f === "email" && v && String(v).trim()) {
-      //   const re =
-      //     /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@(([^<>()[\]\\.,;:\s@"]+\.)+[^<>()[\]\\.,;:\s@"]{2,})$/i;
-      //   if (!re.test(String(v).toLowerCase())) {
-      //     newErrors.email = "Please enter a valid email address";
-      //   }
-      // }
     });
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -221,8 +173,6 @@ const CompanyFormPage = () => {
   function labelFor(name) {
     const map = {
       companyName: "Company Name",
-      // email: "Email",
-      // zipCode: "Zip Code",
       address: "Address (Competitor)",
       websiteAddress: "Website Address",
     };
@@ -361,7 +311,7 @@ const CompanyFormPage = () => {
 
       if (isEditMode) {
         await dispatch(
-          updateCompany({ id: companyId, companyData: payload })
+          updateCompany({ id: companyId, companyData: payload }),
         ).unwrap();
         toast.success("Company updated!");
       } else {
@@ -369,11 +319,13 @@ const CompanyFormPage = () => {
         toast.success("Company created!");
       }
 
-      navigate("/companies");
+      const page = searchParams.get("page");
+      const redirectUrl = page ? `/companies?page=${page}` : "/companies";
+      navigate(redirectUrl);
     } catch (err) {
       console.error(err);
       toast.error(
-        err?.data?.message || err?.message || "Failed to save the company."
+        err?.data?.message || err?.message || "Failed to save the company.",
       );
     } finally {
       setSubmitting(false);
@@ -399,10 +351,16 @@ const CompanyFormPage = () => {
               variant: "white",
               className:
                 "border border-slate-300 text-slate-700 hover:border-slate-400 hover:bg-white",
-              onClick: () => navigate("/companies"),
+              onClick: () => {
+                const page = searchParams.get("page");
+                const redirectUrl = page
+                  ? `/companies?page=${page}`
+                  : "/companies";
+                navigate(redirectUrl);
+              },
             },
           ],
-          [navigate]
+          [navigate, searchParams],
         )}
       />
 
@@ -470,50 +428,14 @@ const CompanyFormPage = () => {
               </div>
             ))}
           </div>
-
-          {/* <div className="md:col-span-2">
-            <label
-              htmlFor="isRecommended-toggle"
-              className="flex items-center cursor-pointer pt-2"
-            >
-              <div className="relative">
-                <input
-                  type="checkbox"
-                  name="isRecommended"
-                  checked={form.isRecommended}
-                  onChange={handleChange}
-                  id="isRecommended-toggle"
-                  className="sr-only"
-                />
-
-                <div
-                  className={`w-11 h-6 rounded-full shadow-inner transition-colors duration-300 ease-in-out ${
-                    form.isRecommended ? "bg-primary" : "bg-slate-300"
-                  }`}
-                ></div>
-
-                <div
-                  className={`dot absolute left-0.5 top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-300 ease-in-out ${
-                    form.isRecommended ? "translate-x-full" : "translate-x-0"
-                  }`}
-                ></div>
-              </div>
-
-              <span className="ml-3 text-sm font-semibold text-slate-700 uppercase tracking-wide">
-                Recommended Company
-              </span>
-            </label>
-          </div> */}
           <div className="mt-4">
             <label className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
               Description
-              {/* Tooltip */}
               <span className="relative flex items-center group">
                 <span className="flex h-4 w-4 items-center justify-center rounded-full border border-slate-300 text-[10px] font-bold text-slate-500 cursor-pointer select-none">
                   i
                 </span>
 
-                {/* Tooltip content */}
                 <span className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 w-72 -translate-x-1/2 rounded-lg bg-slate-900 px-3 py-2 text-xs font-normal text-white opacity-0 shadow-xl transition-opacity duration-200 group-hover:opacity-100">
                   Please use <i>##</i> for H2 tags and <i>#</i> for H3 tags. The
                   remaining text should stay unchanged, and please ensure the
@@ -750,8 +672,8 @@ const CompanyFormPage = () => {
               {submitting
                 ? "Saving..."
                 : isEditMode
-                ? "Save Changes"
-                : "Create Company"}
+                  ? "Save Changes"
+                  : "Create Company"}
             </button>
 
             {isDisabled && (
@@ -759,8 +681,8 @@ const CompanyFormPage = () => {
                 {isUploading
                   ? "Please wait companyImage is uploading..."
                   : hasErrors
-                  ? "Please fill all required fields to enable Save"
-                  : ""}
+                    ? "Please fill all required fields to enable Save"
+                    : ""}
               </p>
             )}
           </div>

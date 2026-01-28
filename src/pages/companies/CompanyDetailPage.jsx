@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import PageHeader from "../../components/PageHeader";
 import {
   clearSelectedCompany,
@@ -12,7 +12,8 @@ const CompanyDetailPage = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { selectedCompany, loading } = useSelector((state) => state.companies);
-
+  const [searchParams] = useSearchParams();
+  const page = searchParams.get("page");
 
   useEffect(() => {
     if (companyId) {
@@ -29,14 +30,18 @@ const CompanyDetailPage = () => {
       variant: "white",
       className:
         "border border-slate-300 text-slate-700 hover:border-slate-400 hover:bg-white",
-      onClick: () => navigate(-1),
+      onClick: () => {
+        const redirectUrl = page ? `/companies?page=${page}` : "/companies";
+        navigate(redirectUrl);
+      },
     },
     {
       value: "Edit Company",
       variant: "primary",
       className:
         "!bg-primary !text-white !border-primary hover:!bg-secondary hover:!border-secondary",
-      onClick: () => navigate(`/company/${companyId}/edit`),
+      onClick: () =>
+        navigate(`/company/${companyId}/edit${page ? `?page=${page}` : ""}`),
     },
   ];
 
@@ -96,7 +101,7 @@ const CompanyDetailPage = () => {
                 label: "Website Address",
                 value: selectedCompany.websiteAddress,
               },
-                // { label: "isRecommended", value: selectedCompany?.isRecommended },
+              // { label: "isRecommended", value: selectedCompany?.isRecommended },
             ].map((item, i) => (
               <div
                 key={i}
@@ -106,7 +111,11 @@ const CompanyDetailPage = () => {
                   {item.label === "isRecommended" ? "isRecommended" : item.label }
                 </p> */}
                 <p className="mt-1 text-sm text-slate-900 font-medium">
-                  {item.value === false ? "No" : item.value === true ? "Yes" : item.value|| item.value || "N/A"}
+                  {item.value === false
+                    ? "No"
+                    : item.value === true
+                      ? "Yes"
+                      : item.value || item.value || "N/A"}
                 </p>
               </div>
             ))}
@@ -251,7 +260,7 @@ const CompanyDetailPage = () => {
                         {value ? "Enabled" : "Disabled"}
                       </span>
                     </div>
-                  )
+                  ),
                 )}
               </div>
             </div>

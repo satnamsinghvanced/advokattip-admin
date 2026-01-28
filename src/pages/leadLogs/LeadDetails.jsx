@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import PageHeader from "../../components/PageHeader";
 import { FaRegCopy } from "react-icons/fa6";
 import { toast } from "react-toastify";
@@ -21,6 +21,8 @@ const LeadDetails = () => {
   const navigate = useNavigate();
 
   const { selectedLead, loading } = useSelector((s) => s.lead);
+  const [searchParams] = useSearchParams();
+  const page = searchParams.get("page");
   const [partnerPrices, setPartnerPrices] = useState([]);
   const [status, setStatus] = useState("");
   const [profit, setProfit] = useState(0);
@@ -40,7 +42,7 @@ const LeadDetails = () => {
             name: p.partnerId?.name,
             email: p.partnerId?.email,
             leadPrice: p.leadPrice || 0,
-          }))
+          })),
         );
       }
     }
@@ -55,7 +57,7 @@ const LeadDetails = () => {
   // ✅ Handle per-partner lead price update
   const handlePartnerPriceChange = async (partnerId, value) => {
     const updated = partnerPrices.map((p) =>
-      p.partnerId === partnerId ? { ...p, leadPrice: Number(value) } : p
+      p.partnerId === partnerId ? { ...p, leadPrice: Number(value) } : p,
     );
     setPartnerPrices(updated);
 
@@ -103,7 +105,7 @@ const LeadDetails = () => {
     add(
       "Lead Summary",
       "Created At",
-      new Date(selectedLead.createdAt).toLocaleString()
+      new Date(selectedLead.createdAt).toLocaleString(),
     );
     add("Lead Summary", "Total Profit", selectedLead.profit);
     add("Lead Summary", "IP Address", selectedLead.ip);
@@ -145,7 +147,7 @@ const LeadDetails = () => {
         er.email,
         er.status,
         er.sentAt ? new Date(er.sentAt).toLocaleString() : "",
-        er.error || ""
+        er.error || "",
       );
     });
     add("");
@@ -172,13 +174,13 @@ const LeadDetails = () => {
           entry.match === true
             ? "Matched"
             : entry.match === false
-            ? "Not Matched"
-            : entry.limitReached === false
-            ? "Passed"
-            : entry.isPremium
-            ? "Ranked"
-            : "Checked",
-          JSON.stringify(entry)
+              ? "Not Matched"
+              : entry.limitReached === false
+                ? "Passed"
+                : entry.isPremium
+                  ? "Ranked"
+                  : "Checked",
+          JSON.stringify(entry),
         );
       });
     });
@@ -202,7 +204,10 @@ const LeadDetails = () => {
       variant: "white",
       className:
         "border border-slate-300 text-slate-700 hover:border-slate-400 hover:bg-white",
-      onClick: () => navigate(-1),
+      onClick: () => {
+        const redirectUrl = page ? `/lead-logs?page=${page}` : "/lead-logs";
+        navigate(redirectUrl);
+      },
     },
     {
       value: "Export CSV",
@@ -290,7 +295,7 @@ const LeadDetails = () => {
                         const updated = partnerPrices.map((partner) =>
                           partner.partnerId === p.partnerId
                             ? { ...partner, leadPrice: Number(e.target.value) }
-                            : partner
+                            : partner,
                         );
                         setPartnerPrices(updated);
                       }}
@@ -307,7 +312,7 @@ const LeadDetails = () => {
                               leadId: id,
                               partnerId: p.partnerId,
                               leadPrice: p.leadPrice,
-                            }
+                            },
                           );
 
                           if (res.data.success) {
@@ -315,7 +320,7 @@ const LeadDetails = () => {
                             setProfit(res.data.data.profit); // update total profit
                           } else {
                             toast.error(
-                              res.data.message || "Failed to update price"
+                              res.data.message || "Failed to update price",
                             );
                           }
                         } catch (err) {
@@ -365,8 +370,8 @@ const LeadDetails = () => {
                         er.status === "sent"
                           ? "bg-green-100 text-green-700"
                           : er.status === "failed"
-                          ? "bg-red-100 text-red-700"
-                          : "bg-yellow-100 text-yellow-700"
+                            ? "bg-red-100 text-red-700"
+                            : "bg-yellow-100 text-yellow-700"
                       }`}
                     >
                       {er.status.toUpperCase()}
@@ -433,7 +438,7 @@ const LeadDetails = () => {
                       <button
                         onClick={() => {
                           navigator.clipboard.writeText(
-                            selectedLead.formNumber
+                            selectedLead.formNumber,
                           );
                           toast.info("Lead Type ID is  copied!");
                         }}

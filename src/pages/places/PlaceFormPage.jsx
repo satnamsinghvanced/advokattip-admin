@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useDispatch, useSelector, shallowEqual } from "react-redux";
-import { useNavigate, useParams } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import PageHeader from "../../components/PageHeader";
-import ReactQuill from "react-quill-new";
 import "react-quill-new/dist/quill.snow.css";
 import { getCountiesForPlace } from "../../store/slices/countySlice";
 import {
@@ -15,32 +14,6 @@ import { toast } from "react-toastify";
 import ImageUploader from "../../UI/ImageUpload";
 import { getCompaniesAll } from "../../store/slices/companySlice";
 import { RiDeleteBin5Line } from "react-icons/ri";
-
-const quillModules = {
-  toolbar: [
-    [{ header: [1, 2, 3, false] }],
-    ["bold", "italic", "underline", "strike"],
-    [{ list: "ordered" }, { list: "bullet" }],
-    ["blockquote", "code-block"],
-    [{ align: [] }],
-    ["link", "image"],
-    ["clean"],
-  ],
-};
-
-const quillFormats = [
-  "header",
-  "bold",
-  "italic",
-  "underline",
-  "strike",
-  "list",
-  "blockquote",
-  "code-block",
-  "align",
-  "link",
-  "image",
-];
 
 const requiredFields = ["name", "slug", "countyId"];
 
@@ -58,6 +31,7 @@ function labelFor(name) {
 
 const PlaceFormPage = () => {
   const { placeId } = useParams();
+  const [searchParams] = useSearchParams();
   const isEditMode = Boolean(placeId);
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -66,7 +40,6 @@ const PlaceFormPage = () => {
   const { counties } = useSelector((state) => state.counties);
   const { allCompanies } = useSelector((state) => state.companies);
   const [companySearch, setCompanySearch] = useState("");
-  // console.log(counties, "test");
   const [form, setForm] = useState({
     name: "",
     countyId: "",
@@ -75,7 +48,6 @@ const PlaceFormPage = () => {
     title: "",
     description: "",
     icon: "",
-    // isRecommended: false,
     rank: 0,
     companies: [],
     metaTitle: "",
@@ -146,10 +118,10 @@ const PlaceFormPage = () => {
         rank: selectedPlace.rank || 0,
         companies: Array.isArray(selectedPlace.companies)
           ? selectedPlace.companies.map((c, index) => ({
-            companyId: String(c.companyId?._id || c.companyId),
-            rank: c.rank ?? index + 1,
-            isRecommended: !!c.isRecommended,
-          }))
+              companyId: String(c.companyId?._id || c.companyId),
+              rank: c.rank ?? index + 1,
+              isRecommended: !!c.isRecommended,
+            }))
           : [],
         metaTitle: selectedPlace.metaTitle || "",
         metaDescription: selectedPlace.metaDescription || "",
@@ -305,21 +277,21 @@ const PlaceFormPage = () => {
 
       if (isEditMode) {
         await dispatch(
-          updatePlace({ id: placeId, placeData: payload, isFormData })
+          updatePlace({ id: placeId, placeData: payload, isFormData }),
         ).unwrap();
         toast.success("Place updated!");
       } else {
-        await dispatch(
-          createPlace({ data: payload, isFormData })
-        ).unwrap();
+        await dispatch(createPlace({ data: payload, isFormData })).unwrap();
         toast.success("Place created!");
       }
 
-      navigate("/places");
+      const page = searchParams.get("page");
+      const redirectUrl = page ? `/places?page=${page}` : "/places";
+      navigate(redirectUrl);
     } catch (err) {
       console.error(err);
       toast.error(
-        err?.data?.message || err?.message || "Failed to save the place."
+        err?.data?.message || err?.message || "Failed to save the place.",
       );
     } finally {
       setSubmitting(false);
@@ -345,10 +317,14 @@ const PlaceFormPage = () => {
               variant: "white",
               className:
                 "border border-slate-300 text-slate-700 hover:border-slate-400 hover:bg-white",
-              onClick: () => navigate("/places"),
+              onClick: () => {
+                const page = searchParams.get("page");
+                const redirectUrl = page ? `/places?page=${page}` : "/places";
+                navigate(redirectUrl);
+              },
             },
           ],
-          [navigate]
+          [navigate, searchParams],
         )}
       />
 
@@ -374,9 +350,10 @@ const PlaceFormPage = () => {
                   value={form[field.name] ?? ""}
                   onChange={handleChange}
                   className={`mt-1 w-full rounded-xl border px-3 py-2 text-sm text-slate-900 outline-none transition
-                    ${errors[field.name]
-                      ? "border-red-400 focus:border-red-500"
-                      : "border-slate-200 focus:border-primary"
+                    ${
+                      errors[field.name]
+                        ? "border-red-400 focus:border-red-500"
+                        : "border-slate-200 focus:border-primary"
                     }`}
                 />
                 {errors[field.name] && (
@@ -396,10 +373,11 @@ const PlaceFormPage = () => {
                 value={form.countyId}
                 onChange={handleChange}
                 className={`mt-1 w-full rounded-xl border px-3 py-2 text-sm text-slate-900 outline-none transition
-                    ${errors.countyId
-                    ? "border-red-400 focus:border-red-500"
-                    : "border-slate-200 focus:border-primary"
-                  }`}
+                    ${
+                      errors.countyId
+                        ? "border-red-400 focus:border-red-500"
+                        : "border-slate-200 focus:border-primary"
+                    }`}
               >
                 <option value="">Select County</option>
                 {counties?.map((c) => (
@@ -431,7 +409,7 @@ const PlaceFormPage = () => {
                   <div className="flex flex-wrap gap-2">
                     {form.companies.map((item) => {
                       const company = allCompanies.find(
-                        (c) => c._id === item.companyId
+                        (c) => c._id === item.companyId,
                       );
                       // console.log(company)
                       return (
@@ -447,7 +425,7 @@ const PlaceFormPage = () => {
                               setForm((prev) => ({
                                 ...prev,
                                 companies: prev.companies.filter(
-                                  (x) => x !== item
+                                  (x) => x !== item,
                                 ),
                               }));
                             }}
@@ -479,7 +457,7 @@ const PlaceFormPage = () => {
                     ?.filter((c) =>
                       c.companyName
                         .toLowerCase()
-                        .includes(companySearch.toLowerCase())
+                        .includes(companySearch.toLowerCase()),
                     )
                     .map((company) => (
                       <label
@@ -490,7 +468,7 @@ const PlaceFormPage = () => {
                           type="checkbox"
                           className="!relative"
                           checked={form.companies.some(
-                            (c) => c.companyId === company._id
+                            (c) => c.companyId === company._id,
                           )}
                           onChange={(e) => {
                             let updated = [...form.companies];
@@ -506,7 +484,7 @@ const PlaceFormPage = () => {
                               });
                             } else {
                               updated = updated.filter(
-                                (c) => c.companyId !== company._id
+                                (c) => c.companyId !== company._id,
                               );
                             }
                             setForm((prev) => ({
@@ -526,7 +504,7 @@ const PlaceFormPage = () => {
               <div className="space-y-2">
                 {form.companies.map((item, index) => {
                   const company = allCompanies.find(
-                    (c) => c._id === item.companyId
+                    (c) => c._id === item.companyId,
                   );
 
                   return (
