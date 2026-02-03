@@ -22,6 +22,8 @@ const ContactUsListPage = () => {
   const [selectedId, setSelectedId] = useState(null);
   const entries = data?.items || [];
   const total = data?.total || 0;
+
+  // Initialize page from URL
   const getInitialPage = () => {
     const pageParam = searchParams.get("page");
     return pageParam ? parseInt(pageParam, 10) || 1 : 1;
@@ -30,6 +32,7 @@ const ContactUsListPage = () => {
   const [page, setPage] = useState(getInitialPage);
   const limit = 10;
 
+  // Update page when URL changes
   useEffect(() => {
     const pageParam = searchParams.get("page");
     const newPage = pageParam ? parseInt(pageParam, 10) || 1 : 1;
@@ -38,6 +41,7 @@ const ContactUsListPage = () => {
     }
   }, [searchParams]);
 
+  // Update URL when page changes
   useEffect(() => {
     const pageParam = searchParams.get("page");
     const currentPageInUrl = pageParam ? parseInt(pageParam, 10) || 1 : 1;
@@ -104,6 +108,7 @@ const ContactUsListPage = () => {
                 <th className="px-6 py-3">Name</th>
                 <th className="px-6 py-3">Email</th>
                 <th className="px-6 py-3">Phone</th>
+                {/* <th className="px-6 py-3">Message</th> */}
                 <th className="px-6 py-3">Actions</th>
               </tr>
             </thead>
@@ -132,18 +137,36 @@ const ContactUsListPage = () => {
                 entries.map((item, i) => (
                   <tr key={item._id} className="hover:bg-slate-50">
                     <td className="px-6 py-4">{(page - 1) * limit + i + 1}</td>
-                    <td className="px-6 py-4 font-medium text-slate-900">
-                      {item.name}
+                    <td className="font-medium text-slate-900">
+                      <button
+                        className="px-6 py-4 hover:text-blue-500"
+                        title="View Details"
+                        onClick={(e) => {
+                          if (e.ctrlKey || e.metaKey || e.button === 1) {
+                            window.open(`/contact/${item._id}?page=${page}`, "_blank");
+                          } else {
+                            navigate(`/contact/${item._id}?page=${page}`);
+                          }
+                        }}
+                      >
+                        {item.name}
+                      </button>
                     </td>
                     <td className="px-6 py-4">{item.email}</td>
                     <td className="px-6 py-4">{item.phone || "-"}</td>
+                    {/* <td className="px-6 py-4 line-clamp-2">{item.message}</td> */}
+
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3 text-center">
                         <button
                           title="View Details"
-                          onClick={() =>
-                            navigate(`/contact/${item._id}?page=${page}`)
-                          }
+                          onClick={(e) => {
+                            if (e.ctrlKey || e.metaKey || e.button === 1) {
+                              window.open(`/contact/${item._id}?page=${page}`, "_blank");
+                            } else {
+                              navigate(`/contact/${item._id}?page=${page}`);
+                            }
+                          }}
                           className="rounded-full border p-2 text-slate-500 hover:text-slate-900"
                         >
                           <FaRegEye size={16} />

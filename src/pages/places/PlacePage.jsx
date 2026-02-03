@@ -244,8 +244,19 @@ export const Places = () => {
                     <td className="px-6 py-4 text-slate-500">
                       {(page - 1) * limit + index + 1}
                     </td>
-                    <td className="px-6 py-4 font-medium text-slate-900">
-                      {place.name}
+                    <td className="font-medium text-slate-900">
+                      <button
+                        className="hover:text-blue-500 px-6 py-4"
+                        onClick={(e) => {
+                          if (e.ctrlKey || e.metaKey || e.button === 1) {
+                            window.open(`/place/${place._id}?page=${page}`, '_blank');
+                          } else {
+                            navigate(`/place/${place._id}?page=${page}`)
+                          }
+                        }}
+                      >
+                        {place.name}
+                      </button>
                     </td>
                     <td className="px-6 py-4">{place.slug}</td>
                     <td className="px-6 py-4">
@@ -267,9 +278,13 @@ export const Places = () => {
                       <div className="flex items-center justify-center gap-2">
                         <button
                           className="rounded-full border border-slate-200 p-2 text-slate-500 hover:text-slate-900"
-                          onClick={() =>
-                            navigate(`/place/${place._id}?page=${page}`)
-                          }
+                          onClick={(e) => {
+                            if (e.ctrlKey || e.metaKey || e.button === 1) {
+                              window.open(`/place/${place._id}?page=${page}`, '_blank');
+                            } else {
+                              navigate(`/place/${place._id}?page=${page}`)
+                            }
+                          }}
                           title="Preview"
                         >
                           <FaRegEye size={16} />
