@@ -13,10 +13,18 @@ import {
   getArticleById,
   updateArticle,
 } from "../../store/slices/articleSlice";
-import { getCategoriesAll } from "../../store/slices/articleCategoriesSlice";
+import {
+  getCategories,
+  getCategoriesAll,
+} from "../../store/slices/articleCategoriesSlice";
 import { toast } from "react-toastify";
 import ImageUploader from "../../UI/ImageUpload";
 
+const IMAGE_URL = import.meta.env.VITE_API_URL_IMAGE;
+const fixImageUrl = (url) => {
+  if (!url || typeof url !== "string") return url;
+  return url.startsWith("http") ? url : `${IMAGE_URL}${url.startsWith("/") ? "" : "/"}${url}`;
+};
 const quillModules = {
   toolbar: [
     [{ header: [1, 2, 3, false] }],
@@ -141,7 +149,7 @@ const ArticleFormPage = () => {
 
         robots: selectedArticle.robots,
       });
-      setPreviewImage(selectedArticle.image || "");
+      setPreviewImage(fixImageUrl(selectedArticle.image || ""));
     }
   }, [isEditMode, selectedArticle]);
 
@@ -153,13 +161,13 @@ const ArticleFormPage = () => {
         className:
           "border border-slate-300 text-slate-700 hover:border-slate-400 hover:bg-white",
         onClick: () => {
-          const page = searchParams.get("page");
+          const page = searchParams.get('page');
           const redirectUrl = page ? `/articles?page=${page}` : "/articles";
           navigate(redirectUrl);
         },
       },
     ],
-    [navigate, isEditMode, searchParams],
+    [navigate, isEditMode, articleId, searchParams]
   );
 
   const handleChange = (e) => {
@@ -167,7 +175,7 @@ const ArticleFormPage = () => {
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const MAX_FILE_SIZE = 2 * 1024 * 1024;
+  const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
   const allowedExtensions = [
     "image/jpeg",
     "image/png",
@@ -184,7 +192,7 @@ const ArticleFormPage = () => {
     // MIME type check
     if (!allowedExtensions.includes(file.type)) {
       toast.error(
-        "Invalid file type. Please upload jpeg, png, gif, webp, svg or ico.",
+        "Invalid file type. Please upload jpeg, png, gif, webp, svg or ico."
       );
       return;
     }
@@ -220,7 +228,9 @@ const ArticleFormPage = () => {
       if (isEditMode) {
         await dispatch(updateArticle({ id: articleId, formData })).unwrap();
         toast.success("Article updated!");
-        navigate(`/articles`);
+        const page = searchParams.get('page');
+        const redirectUrl = page ? `/articles?page=${page}` : "/articles";
+        navigate(redirectUrl);
       } else {
         await dispatch(createArticle(formData)).unwrap();
         toast.success("Article created!");
@@ -229,7 +239,7 @@ const ArticleFormPage = () => {
     } catch (err) {
       console.error(err);
       toast.error(
-        err?.data?.message || err?.message || "Failed to save the article.",
+        err?.data?.message || err?.message || "Failed to save the article."
       );
     } finally {
       setSubmitting(false);
@@ -339,10 +349,7 @@ const ArticleFormPage = () => {
               <ReactQuill
                 value={form.description}
                 onChange={(value) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    description: value.replace(/&nbsp;/g, " "),
-                  }))
+                  setForm((prev) => ({ ...prev, description: value.replace(/&nbsp;/g, " ") }))
                 }
                 modules={quillModules}
                 formats={quillFormats}

@@ -7,6 +7,12 @@ import {
   getArticleById,
 } from "../../store/slices/articleSlice";
 
+const IMAGE_URL = import.meta.env.VITE_API_URL_IMAGE;
+const fixImageUrl = (url) => {
+  if (!url || typeof url !== "string") return url;
+  return url.startsWith("http") ? url : `${IMAGE_URL}${url.startsWith("/") ? "" : "/"}${url}`;
+};
+
 const ArticleDetailPage = () => {
   const { articleId } = useParams();
   const dispatch = useDispatch();
@@ -14,6 +20,7 @@ const ArticleDetailPage = () => {
   const { selectedArticle, loading } = useSelector((state) => state.articles);
   const [searchParams] = useSearchParams();
   const page = searchParams.get("page");
+
   useEffect(() => {
     if (articleId) {
       dispatch(getArticleById(articleId));
@@ -39,8 +46,7 @@ const ArticleDetailPage = () => {
       variant: "primary",
       className:
         "!bg-primary !text-white !border-primary hover:!bg-secondary hover:!border-secondary",
-      onClick: () =>
-        navigate(`/articles/${articleId}/edit${page ? `?page=${page}` : ""}`),
+      onClick: () => navigate(`/articles/${articleId}/edit${page ? `?page=${page}` : ""}`),
     },
   ];
 
@@ -79,7 +85,7 @@ const ArticleDetailPage = () => {
       <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
         {selectedArticle.image && (
           <img
-            src={selectedArticle.image}
+            src={fixImageUrl(selectedArticle.image)}
             alt={selectedArticle.title}
             className="h-72 w-full rounded-t-2xl object-cover"
           />
@@ -127,7 +133,7 @@ const ArticleDetailPage = () => {
               </p>
               <div className="flex flex-wrap gap-2 mt-1">
                 {Array.isArray(selectedArticle.articleTags) &&
-                selectedArticle.articleTags.length > 0 ? (
+                  selectedArticle.articleTags.length > 0 ? (
                   selectedArticle.articleTags.map((tag, index) => (
                     <span
                       key={index}
@@ -261,7 +267,7 @@ const ArticleDetailPage = () => {
                         {value ? "Enabled" : "Disabled"}
                       </span>
                     </div>
-                  ),
+                  )
                 )}
               </div>
             </div>

@@ -7,6 +7,12 @@ import {
   getPlaceById,
 } from "../../store/slices/placeSlice";
 
+const IMAGE_URL = import.meta.env.VITE_API_URL_IMAGE;
+const fixImageUrl = (url) => {
+  if (!url || typeof url !== "string") return url;
+  return url.startsWith("http") ? url : `${IMAGE_URL}${url.startsWith("/") ? "" : "/"}${url}`;
+};
+
 const PlaceDetailPage = () => {
   const { placeId } = useParams();
   const dispatch = useDispatch();
@@ -36,8 +42,7 @@ const PlaceDetailPage = () => {
       variant: "primary",
       className:
         "!bg-primary !text-white !border-primary hover:!bg-secondary hover:!border-secondary",
-      onClick: () =>
-        navigate(`/place/${placeId}/edit${page ? `?page=${page}` : ""}`),
+      onClick: () => navigate(`/place/${placeId}/edit${page ? `?page=${page}` : ""}`),
     },
   ];
 
@@ -144,7 +149,7 @@ const PlaceDetailPage = () => {
       {selectedPlace.icon && (
         <div className="flex justify-center mb-6">
           <img
-            src={selectedPlace.icon}
+            src={fixImageUrl(selectedPlace.icon)}
             alt={`${selectedPlace.name} icon`}
             className="h-24 w-24 rounded-full object-cover border border-slate-200"
           />
@@ -168,6 +173,7 @@ const PlaceDetailPage = () => {
               </div>
             ))}
           </div>
+
 
           {/* EXCERPT */}
           {selectedPlace.excerpt && (
@@ -203,7 +209,7 @@ const PlaceDetailPage = () => {
             </p>
 
             {Array.isArray(selectedPlace.companies) &&
-            selectedPlace.companies.length > 0 ? (
+              selectedPlace.companies.length > 0 ? (
               <div className="space-y-3">
                 {[...selectedPlace.companies]
                   .sort((a, b) => (a.rank ?? 0) - (b.rank ?? 0))

@@ -3,10 +3,13 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import PageHeader from "../../components/PageHeader";
 
-import {
-  getCountyById,
-  clearSelectedCounty,
-} from "../../store/slices/countySlice";
+import { getCountyById, clearSelectedCounty } from "../../store/slices/countySlice";
+
+const IMAGE_URL = import.meta.env.VITE_API_URL_IMAGE;
+const fixImageUrl = (url) => {
+  if (!url || typeof url !== "string") return url;
+  return url.startsWith("http") ? url : `${IMAGE_URL}${url.startsWith("/") ? "" : "/"}${url}`;
+};
 
 const CountiesDetailPage = () => {
   const { countyId } = useParams();
@@ -37,8 +40,7 @@ const CountiesDetailPage = () => {
       variant: "primary",
       className:
         "!bg-primary !text-white !border-primary hover:!bg-secondary hover:!border-secondary",
-      onClick: () =>
-        navigate(`/county/${countyId}/edit${page ? `?page=${page}` : ""}`),
+      onClick: () => navigate(`/county/${countyId}/edit${page ? `?page=${page}` : ""}`),
     },
   ];
 
@@ -145,7 +147,7 @@ const CountiesDetailPage = () => {
       {selectedCounty.icon && (
         <div className="flex justify-center mb-6">
           <img
-            src={selectedCounty.icon}
+            src={fixImageUrl(selectedCounty.icon)}
             alt={`${selectedCounty.name} icon`}
             className="h-24 w-24 rounded-full object-cover border border-slate-200"
           />
@@ -169,6 +171,7 @@ const CountiesDetailPage = () => {
               </div>
             ))}
           </div>
+
 
           {/* EXCERPT */}
           {selectedCounty.excerpt && (
@@ -204,7 +207,7 @@ const CountiesDetailPage = () => {
             </p>
 
             {Array.isArray(selectedCounty.companies) &&
-            selectedCounty.companies.length > 0 ? (
+              selectedCounty.companies.length > 0 ? (
               <div className="space-y-3">
                 {[...selectedCounty.companies]
                   .sort((a, b) => (a.rank ?? 0) - (b.rank ?? 0))
