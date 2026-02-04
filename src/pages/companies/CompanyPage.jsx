@@ -298,7 +298,7 @@ export const Company = () => {
                     </td>
                     <td className="font-medium text-slate-900">
                       <button
-                        className="hover:text-blue-500 px-6 py-4"
+                        className="hover:text-blue-500 px-6 py-4 text-start"
                         onClick={(e) => {
                           if (e.ctrlKey || e.metaKey || e.button === 1) {
                             window.open(`/company/${company._id}?page=${page}`, '_blank');
