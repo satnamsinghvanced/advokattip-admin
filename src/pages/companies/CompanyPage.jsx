@@ -1,22 +1,22 @@
-import { useEffect, useState, useRef, useCallback } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AiTwotoneEdit } from "react-icons/ai";
-import { RiDeleteBin5Line } from "react-icons/ri";
 import { LuFileUp, LuPlus } from "react-icons/lu";
-import { toast } from "react-toastify";
+import { RiDeleteBin5Line } from "react-icons/ri";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useSearchParams } from "react-router";
+import { toast } from "react-toastify";
 
 import PageHeader from "../../components/PageHeader";
 import Pagination from "../../UI/pagination";
 
+import { FaRegEye } from "react-icons/fa";
+import { ROUTES } from "../../consts/routes";
 import {
-  getCompanies,
-  deleteCompany,
   createCompany,
+  deleteCompany,
+  getCompanies,
   importCompanies,
 } from "../../store/slices/companySlice";
-import { ROUTES } from "../../consts/routes";
-import { FaRegEye } from "react-icons/fa";
 
 export const Company = () => {
   const dispatch = useDispatch();
@@ -30,7 +30,7 @@ export const Company = () => {
     const pageParam = searchParams.get("page");
     return pageParam ? parseInt(pageParam, 10) || 1 : 1;
   };
-  const [page, setPage] = useState(getInitialPage());
+  const [page, setPage] = useState(getInitialPage);
   const [limit] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -138,8 +138,6 @@ export const Company = () => {
 
     try {
       const result = await dispatch(importCompanies(formData)).unwrap();
-      // console.log(result);
-
       const { inserted = 0, skipped = 0 } = result;
 
       let message = "Companies imported successfully";
@@ -224,7 +222,7 @@ export const Company = () => {
               setUploadFile(selectedFile);
             } else {
               toast.error(
-                "Invalid file type. Only CSV (.csv) and Excel (.xlsx) files are allowed.",
+                "Invalid file type. Only CSV (.csv) and Excel (.xlsx) files are allowed."
               );
 
               e.target.value = "";
@@ -296,19 +294,17 @@ export const Company = () => {
                     <td className="px-6 py-4 text-slate-500">
                       {(page - 1) * limit + index + 1}
                     </td>
-                    <td className="font-medium text-slate-900">
-                      <button
-                        className="hover:text-blue-500 px-6 py-4 text-start"
-                        onClick={(e) => {
-                          if (e.ctrlKey || e.metaKey || e.button === 1) {
-                            window.open(`/company/${company._id}?page=${page}`, '_blank');
-                          } else {
-                            navigate(`/company/${company._id}?page=${page}`)
-                          }
-                        }}
-                      >
-                        {company.companyName}
-                      </button>
+                    <td
+                      className="px-6 py-4 font-medium text-slate-900 cursor-pointer hover:text-blue-600 transition-colors"
+                      onClick={(e) => {
+                        if (e.ctrlKey || e.metaKey || e.button === 1) {
+                          window.open(`/company/${company._id}?page=${page}`, "_blank");
+                        } else {
+                          navigate(`/company/${company._id}?page=${page}`);
+                        }
+                      }}
+                    >
+                      {company.companyName}
                     </td>
 
                     <td className="px-6 py-4">{company.address}</td>
@@ -345,22 +341,28 @@ export const Company = () => {
                           className="rounded-full border border-slate-200 p-2 text-slate-500 hover:text-slate-900"
                           onClick={(e) => {
                             if (e.ctrlKey || e.metaKey || e.button === 1) {
-                              window.open(`/company/${company._id}?page=${page}`, '_blank');
+                              window.open(`/company/${company._id}?page=${page}`, "_blank");
+                              return;
                             } else {
                               navigate(`/company/${company._id}?page=${page}`)
                             }
-                          }}
+                          }
+                          }
+
                           title="Preview"
                         >
                           <FaRegEye size={16} />
                         </button>
                         <button
                           className="rounded-full border p-2 text-slate-500 hover:text-slate-900"
-                          onClick={() =>
-                            navigate(
-                              `/company/${company._id}/Edit?page=${page}`,
-                            )
-                          }
+                          onClick={(e) => {
+                            if (e.ctrlKey || e.metaKey || e.button === 1) {
+                              window.open(`/company/${company._id}/edit?page=${page}`, "_blank");
+                              return;
+                            } else {
+                              navigate(`/company/${company._id}/edit?page=${page}`)
+                            }
+                          }}
                         >
                           <AiTwotoneEdit size={16} />
                         </button>

@@ -162,7 +162,8 @@ export const CountyPage = () => {
                         className="hover:text-blue-500 px-6 py-4"
                         onClick={(e) => {
                           if (e.ctrlKey || e.metaKey || e.button === 1) {
-                            window.open(`/county/${county._id}?page=${page}`, '_blank');
+                            window.open(`/county/${county._id}?page=${page}`, "_blank");
+                            return;
                           } else {
                             navigate(`/county/${county._id}?page=${page}`)
                           }
@@ -179,7 +180,8 @@ export const CountyPage = () => {
                           className="rounded-full border border-slate-200 p-2 text-slate-500 hover:text-slate-900"
                           onClick={(e) => {
                             if (e.ctrlKey || e.metaKey || e.button === 1) {
-                              window.open(`/county/${county._id}?page=${page}`, '_blank');
+                              window.open(`/county/${county._id}?page=${page}`, "_blank");
+                              return;
                             } else {
                               navigate(`/county/${county._id}?page=${page}`)
                             }
@@ -190,9 +192,14 @@ export const CountyPage = () => {
                         </button>
                         <button
                           className="rounded-full border p-2 text-slate-500 hover:text-slate-900"
-                          onClick={() =>
-                            navigate(`/county/${county._id}/Edit?page=${page}`)
-                          }
+                          onClick={(e) => {
+                            if (e.ctrlKey || e.metaKey || e.button === 1) {
+                              window.open(`/county/${county._id}/edit?page=${page}`, "_blank");
+                              return;
+                            } else {
+                              navigate(`/county/${county._id}/edit?page=${page}`)
+                            }
+                          }}
                         >
                           <AiTwotoneEdit size={16} />
                         </button>
@@ -211,10 +218,7 @@ export const CountyPage = () => {
                 ))
               ) : (
                 <tr>
-                  <td
-                    colSpan="4"
-                    className="px-6 py-6 text-center text-slate-500"
-                  >
+                  <td colSpan="4" className="px-6 py-6 text-center text-slate-500">
                     No counties found
                   </td>
                 </tr>

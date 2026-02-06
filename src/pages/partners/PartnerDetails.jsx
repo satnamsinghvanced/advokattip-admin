@@ -1,16 +1,24 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable react/prop-types */
 
-import { useParams, useNavigate } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
-import { useEffect } from "react";
-import { fetchPartnerById } from "../../store/slices/partnersSlice";
+import { useEffect, useState } from "react";
 import { AiTwotoneEdit } from "react-icons/ai";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { fetchPartnerById } from "../../store/slices/partnersSlice";
 
 export const PartnerDetailPage = () => {
   const { id } = useParams();
   const dispatch = useDispatch();
   const navigate = useNavigate();
+
+  const [searchParams, setSearchParams] = useSearchParams();
+  const getInitialPage = () => {
+    const pageParam = searchParams.get('page');
+    return pageParam ? parseInt(pageParam, 10) || 1 : 1;
+  };
+
+  const [page, setPage] = useState(getInitialPage);
 
   const { partnerDetail, loading } = useSelector((state) => state.partners);
 
@@ -20,10 +28,8 @@ export const PartnerDetailPage = () => {
 
   if (loading) return <p className="p-5 text-sm">Loading...</p>;
   if (!partnerDetail) return <p className="p-5 text-sm">Partner not found</p>;
-console.log(partnerDetail)
   const p = partnerDetail;
 
-  // Format postal codes
   const postalExact =
     p.postalCodes?.exact?.map((e) => e.code).join(", ") || "-";
   const postalRanges =
@@ -32,10 +38,9 @@ console.log(partnerDetail)
   return (
     <div className="relative z-10  overflow-y-auto">
       <div className="mx-auto max-w-8xl p-4">
-        {/* HEADER */}
         <div className="flex  w-full justify-end lg:items-center gap-5 mb-8">
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => navigate(`/partners?page=${page}`)}
             className="btn btn-white btn-sm rounded-lg border-slate-300 text-slate-700 px-6 py-2"
           >
             Back to Partners
@@ -51,7 +56,7 @@ console.log(partnerDetail)
             <div className="flex gap-2">
               <button
                 className="flex items-center gap-1 p-2 border rounded-full text-slate-600 hover:text-black"
-                onClick={() => navigate(`/partners/${p._id}/edit`)}
+                onClick={() => navigate(`/partners/${p._id}/edit?page=${page}`)}
               >
                 <AiTwotoneEdit size={16} />
               </button>
@@ -59,7 +64,6 @@ console.log(partnerDetail)
           </div>
         </div>
 
-        {/* BASIC INFO */}
         <div className="bg-white rounded-xl shadow-sm p-5 grid sm:grid-cols-2 gap-5 mb-6">
           <InfoCard title="City" value={p.city} />
           <InfoCard title="Address" value={p.address || "-"} />
@@ -86,8 +90,6 @@ console.log(partnerDetail)
             value={new Date(p.createdAt).toLocaleString()}
           />
         </div>
-
-        {/* LEAD TYPES */}
         <div className="bg-white rounded-xl shadow-sm p-5 mb-6">
           <h2 className="text-sm font-semibold mb-3">Lead Types & Prices</h2>
 
@@ -104,7 +106,6 @@ console.log(partnerDetail)
                       NOK {lt.price}
                     </span>
                   </p>
-                  {/* <p className="text-xs text-gray-600">Type ID: {lt.typeId}</p> */}
                 </div>
               ))}
             </div>
@@ -113,18 +114,6 @@ console.log(partnerDetail)
           )}
         </div>
 
-        {/* LEADS SUMMARY */}
-        {/* <div className="bg-white rounded-xl shadow-sm p-5 mb-6">
-          <h2 className="text-sm font-semibold mb-3">Leads Summary</h2>
-
-          <div className="grid sm:grid-cols-3 gap-4">
-            <StatCard title="Last Month" value={p.leads?.lastMonth || 0} />
-            <StatCard title="Current Month" value={p.leads?.currentMonth || 0} />
-            <StatCard title="Total Leads" value={p.leads?.total || 0} />
-          </div>
-        </div> */}
-
-        {/* WISHES */}
         <div className="bg-white rounded-xl shadow-sm p-5">
           <h2 className="text-sm font-semibold mb-3">Partner Preferences</h2>
 
@@ -160,9 +149,8 @@ const InfoCard = ({ title, value, badge }) => (
 
     {badge !== undefined ? (
       <span
-        className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
-          badge ? "bg-primary text-white" : "bg-red-600 text-white"
-        }`}
+        className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${badge ? "bg-primary text-white" : "bg-red-600 text-white"
+          }`}
       >
         {value}
       </span>

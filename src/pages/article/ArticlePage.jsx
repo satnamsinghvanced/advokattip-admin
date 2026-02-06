@@ -1,26 +1,27 @@
-import { useEffect, useState, useCallback } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useCallback, useEffect, useState } from "react";
 import { AiTwotoneEdit } from "react-icons/ai";
-import { RiDeleteBin5Line } from "react-icons/ri";
 import { FaRegEye } from "react-icons/fa";
 import { LuPlus } from "react-icons/lu";
-import { toast } from "react-toastify";
+import { RiDeleteBin5Line } from "react-icons/ri";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useSearchParams } from "react-router";
+import { toast } from "react-toastify";
 import PageHeader from "../../components/PageHeader";
+import { deleteArticle, getArticles } from "../../store/slices/articleSlice";
 import Pagination from "../../UI/pagination";
-import { getArticles, deleteArticle } from "../../store/slices/articleSlice";
 
 const ArticlePage = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { articles, loading, error } = useSelector((state) => state.articles);
+
   // Initialize page from URL
   const getInitialPage = () => {
-    const pageParam = searchParams.get("page");
+    const pageParam = searchParams.get('page');
     return pageParam ? parseInt(pageParam, 10) || 1 : 1;
   };
-  const [page, setPage] = useState(getInitialPage());
+  const [page, setPage] = useState(getInitialPage);
   const [limit] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -94,9 +95,7 @@ const ArticlePage = () => {
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between px-6 py-4 gap-3">
           <div>
-            <p className="text-sm font-semibold text-slate-900">
-              Articles overview
-            </p>
+            <p className="text-sm font-semibold text-slate-900">Articles overview</p>
             <p className="text-xs text-slate-500">
               {loading ? "Loading..." : `${totalArticles} items`}
             </p>
@@ -121,10 +120,9 @@ const ArticlePage = () => {
                 <th className="px-6 py-4">#</th>
                 <th className="px-6 py-4">Title</th>
                 <th className="px-6 py-4">Category</th>
+                {/* <th className="px-6 py-4">Author</th> */}
                 <th className="px-6 py-4">Created At</th>
-                <th className="px-6 py-4 flex items-center justify-center">
-                  Actions
-                </th>
+                <th className="px-6 py-4 flex items-center justify-center">Actions</th>
               </tr>
             </thead>
 
@@ -141,25 +139,22 @@ const ArticlePage = () => {
                 ))
               ) : error ? (
                 <tr>
-                  <td
-                    colSpan="6"
-                    className="px-6 py-6 text-center text-red-500"
-                  >
+                  <td colSpan="6" className="px-6 py-6 text-center text-red-500">
                     {error}
                   </td>
                 </tr>
               ) : totalArticles > 0 ? (
                 articles.data.map((article, index) => (
                   <tr key={article._id} className="hover:bg-slate-50">
-                    <td className="px-6 py-4 text-slate-500">
-                      {(page - 1) * limit + index + 1}
-                    </td>
+                    <td className="px-6 py-4 text-slate-500">{(page - 1) * limit + index + 1}</td>
                     <td className="font-medium text-slate-900">
                       <button
                         className="hover:text-blue-500 px-6 py-4"
+
                         onClick={(e) => {
                           if (e.ctrlKey || e.metaKey || e.button === 1) {
-                            window.open(`/articles/${article._id}?page=${page}`, '_blank');
+                            window.open(`/articles/${article._id}?page=${page}`, "_blank");
+                            return;
                           } else {
                             navigate(`/articles/${article._id}?page=${page}`)
                           }
@@ -168,20 +163,17 @@ const ArticlePage = () => {
                         {article.title}
                       </button>
                     </td>
-                    <td className="px-6 py-4">
-                      {article.categoryId?.title || "N/A"}
-                    </td>
+                    <td className="px-6 py-4">{article.categoryId?.title || "N/A"}</td>
                     {/* <td className="px-6 py-4">{article.createdBy?.username || "N/A"}</td> */}
-                    <td className="px-6 py-4 text-sm">
-                      {new Date(article.createdAt).toLocaleDateString()}
-                    </td>
+                    <td className="px-6 py-4 text-sm">{new Date(article.createdAt).toLocaleDateString()}</td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-center gap-2">
                         <button
                           className="rounded-full border p-2 text-slate-500 hover:text-slate-900"
                           onClick={(e) => {
                             if (e.ctrlKey || e.metaKey || e.button === 1) {
-                              window.open(`/articles/${article._id}?page=${page}`, '_blank');
+                              window.open(`/articles/${article._id}?page=${page}`, "_blank");
+                              return;
                             } else {
                               navigate(`/articles/${article._id}?page=${page}`)
                             }
@@ -191,11 +183,14 @@ const ArticlePage = () => {
                         </button>
                         <button
                           className="rounded-full border p-2 text-slate-500 hover:text-slate-900"
-                          onClick={() =>
-                            navigate(
-                              `/articles/${article._id}/edit?page=${page}`,
-                            )
-                          }
+                          onClick={(e) => {
+                            if (e.ctrlKey || e.metaKey || e.button === 1) {
+                              window.open(`/articles/${article._id}/edit?page=${page}`, "_blank");
+                              return;
+                            } else {
+                              navigate(`/articles/${article._id}/edit?page=${page}`)
+                            }
+                          }}
                         >
                           <AiTwotoneEdit size={16} />
                         </button>
@@ -214,10 +209,7 @@ const ArticlePage = () => {
                 ))
               ) : (
                 <tr>
-                  <td
-                    colSpan="6"
-                    className="px-6 py-6 text-center text-slate-500"
-                  >
+                  <td colSpan="6" className="px-6 py-6 text-center text-slate-500">
                     No articles found
                   </td>
                 </tr>

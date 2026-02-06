@@ -1,16 +1,15 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useEffect, useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
-import { useSelector, useDispatch } from "react-redux";
-import { FaRegEye } from "react-icons/fa6";
+import { useEffect, useRef, useState } from "react";
 import { AiOutlineFundView, AiTwotoneEdit } from "react-icons/ai";
+import { FaRegEye } from "react-icons/fa6";
 import { RiDeleteBin5Line } from "react-icons/ri";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
-import PageHeader from "../../components/PageHeader";
-import Pagination from "../../UI/pagination";
-import { fetchPartners, deletePartner } from "../../store/slices/partnersSlice";
 import api from "../../api/axios";
-import { LuLogs } from "react-icons/lu";
+import PageHeader from "../../components/PageHeader";
+import { deletePartner, fetchPartners } from "../../store/slices/partnersSlice";
+import Pagination from "../../UI/pagination";
 
 export const CollaboratePartnerPage = () => {
   const navigate = useNavigate();
@@ -19,7 +18,13 @@ export const CollaboratePartnerPage = () => {
     (state) => state.partners
   );
 
-  const [page, setPage] = useState(1);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const getInitialPage = () => {
+    const pageParam = searchParams.get("page");
+    return pageParam ? parseInt(pageParam, 10) || 1 : 1;
+  };
+
+  const [page, setPage] = useState(getInitialPage);
   const limit = 10;
   const [limitLoading, setLimitLoading] = useState(false);
   const [filters, setFilters] = useState({
@@ -59,6 +64,26 @@ export const CollaboratePartnerPage = () => {
   };
 
   useEffect(() => {
+    const pageParam = searchParams.get("page");
+    const newPage = pageParam ? parseInt(pageParam, 10) || 1 : 1;
+    if (newPage !== page) {
+      setPage(newPage);
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    const pageParam = searchParams.get("page");
+    const currentPageInUrl = pageParam ? parseInt(pageParam, 10) || 1 : 1;
+    if (page !== currentPageInUrl) {
+      if (page > 1) {
+        setSearchParams({ page: page.toString() });
+      } else {
+        setSearchParams({});
+      }
+    }
+  }, [page, setSearchParams]);
+
+  useEffect(() => {
     applyFilters(filters, page);
   }, [page]);
 
@@ -94,7 +119,7 @@ export const CollaboratePartnerPage = () => {
       variant: "primary",
       className:
         "!bg-primary !text-white !border-primary hover:!bg-secondary hover:!border-secondary",
-      onClick: () => navigate("/partners/create"),
+      onClick: () => navigate(`/partners/create?page=${page}`),
     },
   ];
 
@@ -210,11 +235,10 @@ export const CollaboratePartnerPage = () => {
                 }
               }}
               className={`px-3 py-1 rounded-lg text-white 
-    ${
-      limitLoading
-        ? "bg-gray-400 cursor-not-allowed"
-        : "bg-primary hover:bg-primary/80"
-    }
+    ${limitLoading
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-primary hover:bg-primary/80"
+                }
   `}
             >
               {limitLoading ? (
@@ -246,7 +270,7 @@ export const CollaboratePartnerPage = () => {
                   <th className="px-6 py-3">Name</th>
                   <th className="px-6 py-3">City</th>
                   <th className="px-6 py-3">Postal Codes</th>
-                 <th className="px-6 py-3">Monthly Lead Limit</th>
+                  <th className="px-6 py-3">Monthly Lead Limit</th>
                   <th className="px-6 py-3">Premium</th>
                   <th className="px-6 py-3">Status</th>
                   <th className="px-6 py-3 text-center">Actions</th>
@@ -278,30 +302,28 @@ export const CollaboratePartnerPage = () => {
                         {Array.isArray(p.postalCodes)
                           ? p.postalCodes.join(", ")
                           : p.postalCodes?.exact?.length > 0
-                          ? p.postalCodes.exact.map((c) => c.code).join(", ")
-                          : p.postalCodes?.ranges?.length > 0
-                          ? p.postalCodes.ranges
-                              .map((r) => `${r.from}-${r.to}`)
-                              .join(", ")
-                          : ""}
+                            ? p.postalCodes.exact.map((c) => c.code).join(", ")
+                            : p.postalCodes?.ranges?.length > 0
+                              ? p.postalCodes.ranges
+                                .map((r) => `${r.from}-${r.to}`)
+                                .join(", ")
+                              : ""}
                       </td>
                       <td className="px-6 py-4 font-semibold text-slate-900">
                         {p.leads.total ?? 0}
                       </td>
                       <td className="px-6 py-4">
                         <span
-                          className={`inline-block px-3 py-1 rounded-full text-white text-xs font-bold ${
-                            p.isPremium ? "bg-slate-900" : "bg-slate-400"
-                          }`}
+                          className={`inline-block px-3 py-1 rounded-full text-white text-xs font-bold ${p.isPremium ? "bg-slate-900" : "bg-slate-400"
+                            }`}
                         >
                           {p.isPremium ? "Premium" : "Non-Premium"}
                         </span>
                       </td>
                       <td className="px-6 py-4">
                         <span
-                          className={`inline-block px-3 py-1 rounded-full text-white text-xs font-bold ${
-                            p.isActive ? "bg-slate-900" : "bg-slate-400"
-                          }`}
+                          className={`inline-block px-3 py-1 rounded-full text-white text-xs font-bold ${p.isActive ? "bg-slate-900" : "bg-slate-400"
+                            }`}
                         >
                           {p.isActive ? "Active" : "Inactive"}
                         </span>
@@ -328,7 +350,7 @@ export const CollaboratePartnerPage = () => {
                             <button
                               className="rounded-full border border-slate-200 p-2 text-slate-500 hover:text-slate-900"
                               onClick={() =>
-                                navigate(`/partners/view-logs/${p._id}`)
+                                navigate(`/partners/view-logs/${p._id}?page=${page}`)
                               }
                             >
                               <AiOutlineFundView size={16} />
@@ -344,7 +366,14 @@ export const CollaboratePartnerPage = () => {
                           <div className="relative group">
                             <button
                               className="rounded-full border border-slate-200 p-2 text-slate-500 hover:text-slate-900"
-                              onClick={() => navigate(`/partners/${p._id}`)}
+                              onClick={(e) => {
+                                if (e.ctrlKey || e.metaKey || e.button === 1) {
+                                  window.open(`/partners/${p._id}?page=${page}`, "_blank");
+                                  return;
+                                } else {
+                                  navigate(`/partners/${p._id}?page=${page}`)
+                                }
+                              }}
                             >
                               <FaRegEye size={16} />
                             </button>
@@ -360,9 +389,14 @@ export const CollaboratePartnerPage = () => {
                           <div className="relative group">
                             <button
                               className="rounded-full border p-2 text-slate-500 hover:text-slate-900"
-                              onClick={() =>
-                                navigate(`/partners/${p._id}/edit`)
-                              }
+                              onClick={(e) => {
+                                if (e.ctrlKey || e.metaKey || e.button === 1) {
+                                  window.open(`/partners/${p._id}/edit?page=${page}`, "_blank");
+                                  return;
+                                } else {
+                                  navigate(`/partners/${p._id}/edit?page=${page}`)
+                                }
+                              }}
                             >
                               <AiTwotoneEdit size={16} />
                             </button>
